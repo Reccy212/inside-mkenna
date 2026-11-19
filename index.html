@@ -55,8 +55,19 @@ button.locked{opacity:.75}
 .seg{display:inline-flex;background:rgba(255,255,255,.06);border-radius:999px;padding:3px;border:1px solid var(--line)}
 .seg button{border:none;background:none;padding:6px 12px}
 .seg button.on{background:rgba(255,255,255,.18)}
-#caption{top:18px;left:50%;transform:translateX(-50%);padding:12px 18px;width:min(520px,calc(100% - 680px));min-width:260px;text-align:center;font-size:15px;line-height:1.45}
+#caption{top:132px;left:50%;transform:translateX(-50%);padding:12px 18px;width:min(520px,calc(100% - 680px));min-width:260px;text-align:center;font-size:15px;line-height:1.45}
 #caption .step{font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:3px}
+#swap{top:16px;left:50%;transform:translateX(-50%);padding:8px;width:min(360px,calc(100% - 660px));min-width:280px;z-index:4}
+.sw2{position:relative;display:flex;background:rgba(255,255,255,.06);border-radius:999px;padding:4px;border:1px solid var(--line)}
+.sw2 button{flex:1;position:relative;z-index:1;border:none;background:none;padding:9px 10px;font-size:15px;font-family:Fredoka,Nunito,sans-serif;font-weight:600;color:var(--muted)}
+.sw2 button.on{color:#10172e}
+.sw2 button:hover{background:none}
+.sw2 .knob{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:linear-gradient(135deg,#7fe0b0,#4fc3a1);transition:left .35s cubic-bezier(.5,1.6,.4,1),background .35s}
+#swap.ismk .knob{left:50%;background:linear-gradient(135deg,#ffd166,#ff8a5c)}
+#cmp{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;align-items:center;font-size:12px;font-weight:700;margin:8px 4px 2px}
+#cmp .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+#cmp .bar div{height:100%;border-radius:99px;transition:background .3s}
+.stag{position:fixed;pointer-events:none;font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(255,209,102,.95);color:#1b1020;transform:translate(-50%,-50%);white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:2}
 #tip{position:fixed;pointer-events:none;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.75);font-size:13px;font-weight:700;display:none;white-space:nowrap;z-index:5}
 .blabel .sm{display:none}
 .blabel{position:fixed;pointer-events:none;font-size:12px;font-weight:800;color:#dfe6ff;background:rgba(10,14,30,.6);border:1px solid var(--line);padding:3px 9px;border-radius:999px;transform:translate(-50%,-100%);white-space:nowrap}
@@ -132,6 +143,10 @@ body.intrip #menu{display:none!important}
 #side.open{display:block}
 #info{top:auto;bottom:80px;left:12px;right:12px;width:auto;max-height:46%}
 #hint,#tripHint{display:none}
+#swap{top:10px;left:auto;right:10px;transform:none;width:calc(100% - 128px);min-width:0;padding:6px}
+.sw2 button{font-size:13px;padding:7px 6px}
+#cmp{font-size:11px;gap:3px 8px;margin-top:6px}
+.stag{font-size:10px;padding:3px 7px}
 .blabel .lg{display:none}.blabel .sm{display:inline}
 #caption{bottom:156px;font-size:14px}
 #stopCard{max-height:52%;padding:12px 14px}
@@ -180,10 +195,11 @@ body.intrip #menu{display:none!important}
 <div id="bar" class="panel">
 <button id="lessonsBtn">📚 Lessons</button>
 <button id="play" class="hot">▶ Follow the food</button>
-<div class="seg" id="mode"><button data-m="healthy" class="on">Healthy body</button><button data-m="mk">M'Kenna's body</button></div>
 <button id="spin">⟳ Spin</button>
 <button id="reset">⌂ Reset</button>
 </div>
+<div id="swap" class="panel"><div class="sw2"><span class="knob"></span><button data-m="healthy" class="on">Normal body</button><button data-m="mk">M'Kenna</button></div><div id="cmp"></div></div>
+<div id="symTags"></div>
 <div id="hint">Drag to rotate · scroll or pinch to zoom · click any part</div>
 <div class="blabel" id="lblVilli"><span class="lg">Zoomed in: small intestine lining</span><span class="sm">Villi</span></div>
 <div class="blabel" id="lblCell"><span class="lg">Zoomed in: one body cell</span><span class="sm">Body cell</span></div>
@@ -193,7 +209,7 @@ body.intrip #menu{display:none!important}
 <div id="tripTop" class="panel">
 <button id="exitTrip">← Back</button>
 <h2 id="tripTitle"></h2>
-<div class="seg" id="tripMode"><button data-m="healthy" class="on">Healthy</button><button data-m="mk">M'Kenna</button></div>
+<div class="seg" id="tripMode"><button data-m="healthy" class="on">Normal</button><button data-m="mk">M'Kenna</button></div>
 <button id="tripNext" class="hot hidden"></button>
 </div>
 <div id="tripHud" class="panel hidden"></div>
@@ -245,7 +261,7 @@ const LESSONS=[
 {n:4,q:'What happens to food molecules as they move through the small intestine and large intestine?',u:'Ride through the large intestine',h:'b1ae694f6c1079f0cea34f330b12df0ad3a92c0310fb85e3b525773d5bbb8b8f',acts:[['trip:li','Inside the large intestine']]},
 {n:5,q:'Why do large food molecules, like some complex carbohydrates, seem to disappear in the digestive system?',u:'Molecule lab: watch an enzyme break starch into sugar',h:'a0f7b10036dcb8eca7e34bcaa1ce575afb512d8bcce4cbbe5044098e781e63a1',acts:[['lab:carbs','Molecule lab']]},
 {n:6,q:'What happens to the different substances in food as it travels through the digestive system?',u:'Molecule lab: proteins and fats',h:'dc9a2dedd10b0da918a69b174db030150429274a1b3a0016365f8fbcf05f8901',acts:[['lab:protein','Proteins'],['lab:fat','Fats']]},
-{n:7,q:"What is the function of the digestive system, and how is M'Kenna's digestive system different?",u:"Follow the food, and switch between a healthy body and M'Kenna's",h:'1740ecdf5e14480d660491c3b530b61b9887f6ef72fec4261580de4b4c917163',acts:[['journey','Follow the food']]},
+{n:7,q:"What is the function of the digestive system, and how is M'Kenna's digestive system different?",u:"Follow the food through a normal body and through M'Kenna's",h:'1740ecdf5e14480d660491c3b530b61b9887f6ef72fec4261580de4b4c917163',acts:[['journey','Follow the food']]},
 {n:8,q:"What does the surface of M'Kenna's small intestine look like up close compared with a healthy one?",u:'Zoom in on one villus and compare the lining',h:'f974fce97601eba3953e727da8e48133f476de52fbd42f36efa5127fb73c4368',acts:[['trip:si8','Villi up close']]},
 {n:9,q:'How can a problem in one body system cause problems in other systems?',u:'Ride through the heart and the lungs',h:'d2703f3aef2145d3c4165554fc1bc4ab9b571de4b4cd173731f59b0e67028201',acts:[['trip:heart','Inside the heart'],['trip:lungs','Inside the lungs'],['journey','Follow the food']]},
 {n:10,q:"Why is M'Kenna losing so much weight?",u:'Ride inside one body cell',h:'1d15b241e96cb39a32be419336a88ac560be4e65ea4c2ea57d8ee8b7658a2649',acts:[['trip:cell','Inside a body cell']]},
@@ -278,7 +294,7 @@ vessels:{name:'Blood vessels',sys:'Circulatory',sw:'#ff5470',trip:'heart',mkL:9,
 cell:{name:'Body cell',sys:'Cells',sw:'#b892ff',trip:'cell',mkL:10,ll:10,need:10,does:'Every cell uses food molecules in two ways: as building blocks to grow and repair, and as fuel. Mitochondria combine sugar with oxygen to release energy.',eq:'sugar + oxygen → carbon dioxide + water + energy',mk:'Fewer molecules reach her cells, so they have less fuel and fewer building blocks. That helps explain her tiredness, weight loss and slow growth.',lesson:'Lesson 10: Why is M\'Kenna losing so much weight?'}
 };
 const TRIP_LESSON={stomach:2,si:3,si8:8,li:4,heart:9,lungs:9,cell:10,cellmito:12,cellmk:13};
-function mkAllowed(){if(trip)return !!(trip.def.mkLesson&&has(trip.def.mkLesson));if(lab)return false;return has(7)}
+function mkAllowed(){if(trip)return !!(trip.def.mkLesson&&has(trip.def.mkLesson));if(lab)return false;return canBody()}
 function canBody(){return has(1)||has(7)||has(9)}
 
 const canvas=$('c');
@@ -291,7 +307,7 @@ const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(40,1,.1,200);
 const controls=new THREE.OrbitControls(camera,canvas);
 controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2.5;controls.maxDistance=34;controls.autoRotateSpeed=1.2;
-const HOME_T=new THREE.Vector3(0,.3,0);
+const HOME_T=new THREE.Vector3(0,innerWidth/innerHeight>1.1?.95:.3,0);
 function homeDist(){const a=innerWidth/innerHeight;return a<1.1?Math.min(30,16/a*.85):16}
 camera.position.set(0,1.2,homeDist());controls.target.copy(HOME_T);
 scene.add(new THREE.HemisphereLight(0xcfe0ff,0x1a1a30,.9));
@@ -305,9 +321,9 @@ let mkT=0;
 const pick=[],PM={};
 const dashLines=[];
 function reg(id,m){m.userData.id=id;(PM[id]=PM[id]||[]).push(m);pick.push(m);m.userData.base=m.material.opacity;return m}
-const ghostMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{c:{value:new THREE.Color(0x8fb4ff)}},
-vertexShader:'varying vec3 vN;varying vec3 vV;varying float vY;void main(){vec4 wp=modelMatrix*vec4(position,1.);vY=wp.y;vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}',
-fragmentShader:'uniform vec3 c;varying vec3 vN;varying vec3 vV;varying float vY;void main(){float f=pow(1.-abs(dot(normalize(vN),normalize(vV))),2.4);float a=(.025+.42*f)*smoothstep(-5.7,-3.7,vY);gl_FragColor=vec4(c*(.55+.9*f),a);}'});
+const ghostMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{c:{value:new THREE.Color(0x8fb4ff)},uMk:U.mk},
+vertexShader:'attribute float _slim;uniform float uMk;varying vec3 vN;varying vec3 vV;varying float vY;void main(){vec3 p=position+normal*_slim*uMk;vec4 wp=modelMatrix*vec4(p,1.);vY=wp.y;vN=normalize(mat3(modelMatrix)*normal);vV=normalize(cameraPosition-wp.xyz);gl_Position=projectionMatrix*viewMatrix*wp;}',
+fragmentShader:'uniform vec3 c;uniform float uMk;varying vec3 vN;varying vec3 vV;varying float vY;void main(){float f=pow(1.-abs(dot(normalize(vN),normalize(vV))),2.4);float a=(.025+.42*f)*smoothstep(-5.7,-3.7,vY);vec3 col=mix(c,vec3(.98,.78,.55),uMk*.55);gl_FragColor=vec4(col*(.55+.9*f),a);}'});
 function orgMat(o){return new THREE.MeshPhysicalMaterial(Object.assign({vertexColors:true,color:0xffffff,roughness:.5,metalness:0,clearcoat:.55,clearcoatRoughness:.35,transparent:true,opacity:1},o||{}))}
 let skeleton=null,bodyReady=false;
 
@@ -344,8 +360,9 @@ if(id==='body'){o.material=ghostMat;o.renderOrder=5;return}
 if(id==='skeleton'){o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,transparent:true,opacity:.32,depthWrite:false});o.renderOrder=3;skeleton=o;return}
 const opts=id==='lungs'?{opacity:.86,roughness:.6,clearcoat:.2}:id==='liver'?{roughness:.45,clearcoat:.7}:{};
 o.material=orgMat(opts);if(id==='lungs'){o.renderOrder=2;o.material.depthWrite=false}
+if(id==='largeInt'){o.material.onBeforeCompile=sh=>{sh.uniforms.uMk=U.mk;sh.vertexShader='uniform float uMk;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=normal*.035*uMk;')};liMesh=o}
 reg(id,o)});
-const paths=await loadJSON('models/paths_out.json');buildJourney(paths);
+const paths=await loadJSON('models/paths_out.json');buildJourney(paths);buildGas(paths);
 bodyReady=true;hideLoading();applyDim(filterSet());
 }
 
@@ -379,12 +396,11 @@ $('reset').onclick=()=>{select(null);resetView()};
 $('spin').onclick=()=>{controls.autoRotate=!controls.autoRotate;$('spin').classList.toggle('on',controls.autoRotate)};
 $('skelBtn').onclick=()=>{if(!skeleton)return;skeleton.visible=!skeleton.visible;$('skelBtn').classList.toggle('on',skeleton.visible)};
 $('menu').onclick=()=>$('side').classList.toggle('open');
-function setMode(m){if(m==='mk'&&!mkAllowed())return;mode=m;document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m))}
-document.querySelectorAll('#mode button,#tripMode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+function setMode(m){if(m==='mk'&&!mkAllowed())return;mode=m;document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));$('swap').classList.toggle('ismk',m==='mk')}
+document.querySelectorAll('#swap button,#tripMode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 
 function refreshLocks(){
-document.querySelectorAll('[data-m="mk"]').forEach(b=>{b.textContent=b.closest('#tripMode')?"M'Kenna":"M'Kenna's body"});
-$('mode').classList.toggle('hidden',!has(7));
+$('swap').classList.toggle('hidden',!canBody());buildCmp();
 $('play').classList.toggle('hidden',!(has(7)||has(9)));
 $('play').textContent=journey?'■ Stop':'▶ Follow the food';
 $('whatBox').classList.toggle('hidden',!has(13));
@@ -429,6 +445,19 @@ $('lockYes').onclick=()=>{unlocked.clear();saveUnlocked();mode='healthy';if(jour
 function toast(t){const el=$('toast');el.textContent=t;el.style.display='block';clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',2200)}
 function updateBodyGate(){const ok=canBody();$('bodyUI').classList.toggle('hidden',!ok||!!trip||!!lab);if(!ok&&!trip&&!lab&&$('modal').classList.contains('hidden')&&$('panel').classList.contains('hidden'))openModal()}
 
+let liMesh=null,gas=null;
+const SYMS=[[[.95,.3,.75],'Stomachache'],[[-1.15,-.9,.62],'Gas and bloating'],[[.55,-2.55,.62],'Diarrhea'],[[.75,4.55,.5],'Tired, low energy'],[[-2.8,-.7,.3],'Losing weight'],[[1.15,-3.05,.45],'Not growing as expected']];
+SYMS.forEach(s=>{const d=document.createElement('div');d.className='stag';d.textContent=s[1];d.style.opacity=0;$('symTags').appendChild(d);s.el=d;s.v=v3(s[0])});
+const CMP=[['Energy',92,36,0],['Growth',86,44,0],['Food absorbed',90,24,3]];
+function buildCmp(){const el=$('cmp');el.innerHTML='';CMP.forEach(c=>{c.bar=null;if(c[3]&&!has(c[3]))return;const l=document.createElement('div');l.textContent=c[0];const b=document.createElement('div');b.className='bar';const f=document.createElement('div');b.appendChild(f);el.appendChild(l);el.appendChild(b);c.bar=f})}
+function updateSwapFx(time){const f=U.mk.value;
+CMP.forEach(c=>{if(!c.bar)return;const w=c[1]+(c[2]-c[1])*f;c.bar.style.width=w+'%';c.bar.style.background=w>70?'#6ee7b0':w>45?'#ffd166':'#ff8a5c'});
+const show=f>.02&&!trip&&!lab&&!$('bodyUI').classList.contains('hidden');
+SYMS.forEach((s,i)=>{if(!show){s.el.style.display='none';return}const t=s.v.clone().project(camera);if(t.z>1){s.el.style.display='none';return}s.el.style.display='block';s.el.style.opacity=Math.min(1,f*1.4);s.el.style.left=(t.x*.5+.5)*innerWidth+'px';s.el.style.top=(-t.y*.5+.5)*innerHeight+'px';s.el.style.transform=`translate(-50%,-50%) scale(${.9+.1*Math.sin(time*2+i)})`});
+if(liMesh){const t=1-.32*f;liMesh.material.opacity=liMesh.userData.off?.08:t;liMesh.material.depthWrite=!liMesh.userData.off&&f<.05}
+if(gas){gas.visible=f>.01;if(gas.visible){const m=new THREE.Matrix4(),q=new THREE.Quaternion(),p=new THREE.Vector3(),sc=new THREE.Vector3();gas.userData.d.forEach((o,i)=>{o.u=(o.u+o.sp*.0006)%1;gas.userData.c.getPointAt(o.u,p);p.add(o.off);const g=o.s*f*(1+.15*Math.sin(time*3+i));sc.setScalar(g);m.compose(p,q,sc);gas.setMatrixAt(i,m)});gas.instanceMatrix.needsUpdate=true}}
+if(PM.smallInt&&has(3)){const lv=selected==='smallInt'?.32:hovered==='smallInt'?.2:0;const b=new THREE.Color(P.smallInt.sw).multiplyScalar(lv);const pulse=f*(.18+.14*Math.sin(time*3));PM.smallInt.forEach(m=>m.material.emissive.setRGB(b.r+pulse,b.g+pulse*.1,b.b+pulse*.12))}}
+function buildGas(d){const c=new THREE.CatmullRomCurve3(d.li.map(v3));const n=46;gas=new THREE.InstancedMesh(new THREE.SphereGeometry(1,14,10),new THREE.MeshPhysicalMaterial({color:0xe6f0ff,transparent:true,opacity:.75,roughness:.05,clearcoat:1,emissive:0x223040}),n);gas.userData.c=c;gas.userData.d=[];for(let i=0;i<n;i++){gas.userData.d.push({u:Math.random(),sp:rnd(.5,1.5),s:rnd(.045,.085),off:new THREE.Vector3(rnd(-.06,.06),rnd(-.06,.06),rnd(-.06,.06))})}gas.renderOrder=1;gas.visible=false;scene.add(gas)}
 let J=null;
 function buildJourney(d){
 const pGeo=new THREE.SphereGeometry(.06,10,8);
@@ -449,7 +478,7 @@ STEPS:[
 {s:'co2',l:12,ids:['cell','vessels','heart','lungs','trachea'],t:'Inside each cell, sugar and oxygen react (cellular respiration). This releases energy and makes carbon dioxide, which gets breathed out.',mt:'M\'Kenna\'s cells have plenty of oxygen but not enough sugar, so they release less energy. That is part of why she feels tired.',f:[1,.35]},
 {s:'waste',l:7,ids:['smallInt','largeInt'],t:'Whatever was not absorbed moves into the large intestine, which takes back water and forms waste.',mt:'Much more unabsorbed food reaches M\'Kenna\'s large intestine, which connects to her diarrhea and gas.',f:[.3,1]}]};
 }
-function showStep(){const st=journey.steps[journey.i];$('capStep').textContent=`Step ${journey.i+1} of ${journey.steps.length}${has(7)?' · '+(mode==='mk'?"M'Kenna's body":'Healthy body'):''}`;$('capText').textContent=mode==='mk'&&has(7)&&st.mt?st.mt:st.t;const c=$('caption');c.classList.remove('hidden','show');void c.offsetWidth;c.classList.add('show');applyDim(new Set(st.ids))}
+function showStep(){const st=journey.steps[journey.i];$('capStep').textContent=`Step ${journey.i+1} of ${journey.steps.length}${has(7)?' · '+(mode==='mk'?"M'Kenna's body":'Normal body'):''}`;$('capText').textContent=mode==='mk'&&has(7)&&st.mt?st.mt:st.t;const c=$('caption');c.classList.remove('hidden','show');void c.offsetWidth;c.classList.add('show');applyDim(new Set(st.ids))}
 function hideParticles(){if(J)for(const k in J.S)J.S[k].arr.forEach(p=>p.s.visible=false)}
 function stopJourney(){journey=null;hideParticles();$('caption').classList.add('hidden');refreshLocks();applyDim(filterSet())}
 $('play').onclick=()=>{if(journey){stopJourney();return}if(!(has(7)||has(9))||!J)return;select(null);const steps=J.STEPS.filter(x=>has(x.l));if(!steps.length)return;journey={i:0,t:0,steps};refreshLocks();resetView();showStep()};
@@ -1021,8 +1050,8 @@ requestAnimationFrame(loop);
 const dt=Math.min(clock.getDelta(),.05),time=clock.elapsedTime;
 mkT=mode==='mk'&&mkAllowed()?1:0;U.mk.value+=(mkT-U.mk.value)*Math.min(1,dt*1.6);if(Math.abs(U.mk.value-mkT)<.002)U.mk.value=mkT;
 if(mode!==lastMode){lastMode=mode;if(trip)renderStop()}
-if(trip){updateTrip(dt,time);renderer.render(trip.T.scene,tripCam);return}
-if(lab){updateLab(dt,time);labControls.update();renderer.render(lab.scene,labCam);return}
+if(trip){SYMS.forEach(s=>s.el.style.display='none');updateTrip(dt,time);renderer.render(trip.T.scene,tripCam);return}
+if(lab){SYMS.forEach(s=>s.el.style.display='none');updateLab(dt,time);labControls.update();renderer.render(lab.scene,labCam);return}
 if(tween){tween.k=Math.min(1,tween.k+dt*1.5);const e=1-Math.pow(1-tween.k,3);controls.target.lerpVectors(tween.t0,tween.t1,e);camera.position.lerpVectors(tween.c0,tween.c1,e);if(tween.k>=1)tween=null}
 const f=U.mk.value;villiBubble.forEach(v=>{v.scale.y=v.userData.h*(1-.86*f);v.scale.x=v.scale.z=1+.35*f});
 if(PM.heart)PM.heart.forEach(m=>{if(!m.userData.s0)m.userData.s0=m.scale.clone();m.scale.copy(m.userData.s0).multiplyScalar(1+Math.max(0,Math.sin(time*7))*.02)});
@@ -1031,7 +1060,7 @@ if(journey&&J){journey.t+=dt;const st=journey.steps[journey.i],str=J.S[st.s],k=j
 str.arr.forEach((p,i)=>{const u=k*1.55-p.ph;if(i<n&&u>=0&&u<=1){p.s.visible=true;str.c.getPointAt(u,tmp);p.s.position.copy(tmp).add(p.j)}else p.s.visible=false});
 if(journey.t>DUR){hideParticles();journey.i++;journey.t=0;if(journey.i>=journey.steps.length)stopJourney();else showStep()}}
 controls.update();
-place($('lblVilli'),villiG,1.25*BS);place($('lblCell'),cellG,1.15*BS);
+place($('lblVilli'),villiG,1.25*BS);place($('lblCell'),cellG,1.15*BS);updateSwapFx(time);
 renderer.render(scene,camera);
 }
 window.__mk={enterTrip,goStop,setMode,tryCode,get trip(){return trip},get lab(){return lab},exitTrip,enterLab,openPanel,goTo,exitLab};
