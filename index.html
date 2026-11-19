@@ -91,9 +91,6 @@ body.intrip #menu{display:none!important}
 .codeRow input:focus{border-color:var(--gold)}
 .codeRow button{border-radius:14px;padding:0 20px;font-size:15px}
 #codeMsg{min-height:22px;font-size:14px;font-weight:700}
-.share{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;margin:2px 0 4px;padding:8px 12px;border-radius:12px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25)}
-.share b{font-size:16px;letter-spacing:.02em;color:var(--gold)}
-.share button{margin-left:auto;padding:5px 12px}
 #codeMsg.bad{color:#ff8a8a}
 #codeMsg.good{color:#8dffb0}
 .lessons{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -221,7 +218,6 @@ body.intrip #menu{display:none!important}
 <button class="x" id="closeModal" aria-label="Close">✕</button>
 <h2>Inside <span>M'Kenna</span></h2>
 <div class="dq" id="modalSub">Each lesson unlocks with a code from your teacher.</div>
-<div class="share">🔗 Site link: <b>mkenna.vercel.app</b><button id="copyLink">Copy</button></div>
 <div class="codeRow"><input id="codeIn" placeholder="ENTER CODE" autocomplete="off" spellcheck="false" maxlength="24"><button class="hot" id="codeBtn">Unlock</button></div>
 <div id="codeMsg"></div>
 <div class="lessons" id="lessonList"></div>
@@ -426,7 +422,6 @@ $('closeModal').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
 function submitCode(){const r=tryCode($('codeIn').value);const m=$('codeMsg');if(!r){m.textContent="That code didn't match any lesson. Check the spelling and try again.";m.className='bad';return}
 $('codeIn').value='';m.className='good';m.textContent=r==='all'?'Teacher code: every lesson is unlocked.':`Unlocked Lesson ${r.n}!`;toast(r==='all'?'All lessons unlocked':`Lesson ${r.n} unlocked`);refreshLocks();if(trip)renderStop();$('closeModal').classList.toggle('hidden',modalLocked());updateBodyGate()}
-$('copyLink').onclick=async()=>{const b=$('copyLink');try{await navigator.clipboard.writeText('https://mkenna.vercel.app');b.textContent='Copied'}catch(e){b.textContent='Copy failed'}setTimeout(()=>b.textContent='Copy',1800)};
 $('codeBtn').onclick=submitCode;$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')submitCode()});
 $('lockAll').onclick=()=>$('lockConfirm').classList.remove('hidden');
 $('lockNo').onclick=()=>$('lockConfirm').classList.add('hidden');
