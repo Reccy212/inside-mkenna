@@ -80,6 +80,17 @@ body.intrip #menu{display:none!important}
 #labCard h3{font-size:22px;margin:4px 0 8px}
 #labCard p{font-size:15px;line-height:1.5;margin:0 0 10px}
 #labCard .nav{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+#labTabs.tools{display:flex;flex-wrap:wrap;gap:5px;background:none;border:none;padding:0}
+#labTabs.tools button{border:1px solid var(--line);background:rgba(255,255,255,.07);padding:6px 11px}
+#labTabs.tools button.on{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
+#labTabs.tools button.hot{background:linear-gradient(135deg,#ffb347,#ff6f61);color:#1b1020;border:none}
+#labCard .ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:10px;border-radius:12px;background:rgba(255,255,255,.05);font-size:13px}
+#labCard .ctl input[type=range]{flex:1;min-width:140px;accent-color:#ffb347}
+#labCard .chips{display:flex;flex-wrap:wrap;gap:6px}
+#labCard .chips button{font-size:12px;padding:5px 10px}
+#labCard .bars{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;font-size:13px;font-weight:700;margin-bottom:10px}
+#labCard .bars .bar{height:10px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+#labCard .bars .bar div{height:100%;border-radius:99px;transition:width .5s}
 .atoms{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 10px}
 .atoms td{padding:4px 6px;border-top:1px solid var(--line)}
 #modal,#panel{position:fixed;inset:0;background:rgba(5,7,15,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
@@ -271,6 +282,7 @@ const LESSONS=[
 {n:12,q:'Does this chemical reaction to burn food happen inside our bodies?',u:'Reaction lab inside a cell, and a visit to the mitochondria',h:'b61f7a45321ca210a0c0aed53b711843008e125e97f1dcb34d6f9ae4eef11e80',acts:[['lab:cellrx','Reaction in a cell'],['trip:cellmito','Mitochondria']]},
 {n:13,q:"How does a healthy body use food for energy and growth, and how is M'Kenna's body functioning differently?",u:"Compare a healthy cell with one of M'Kenna's cells",h:'aa6422fe6de8bd3fe4b5b959d6077d5337f50be9f2fd3ca6542fa4ec3fd2ed4b',acts:[['trip:cellmk','Compare cells']]},
 {n:14,q:'Do all animals do chemical reactions to get energy from food like humans?',u:'Compare how different animals get energy',h:'4a9394a43c4ba6fdd31e3dd67b3377777ac7d36ab0a040d4f0895d7e31940837',acts:[['panel:animals','Animals']]},
+{n:16,badge:'🧠',label:'Bonus',q:'The brain',u:'A full 3D brain to explore, plus rides through its fluid-filled spaces and along a neuron',h:'6c2356e7e6138057f6229efa19c34b6fb0faad8dea703e7d1b38cff255eb4b8b',acts:[['brain','Brain explorer'],['trip:brainv','Fly inside'],['trip:neuron','Neurons']]},
 {n:15,q:'What questions on our Driving Question Board can we now answer?',u:'Put the whole story together',h:'322473b732fdf88b5c2b037ce41771269a80b8cd75ebeff8bac6ffc17cf068eb',acts:[['panel:review','The big picture']]}
 ];
 const MASTER='ee85d756d03ff4f683e368a2b9b0b1fa0b94053f09f29f878f66c924f7ecf2bc';
@@ -293,6 +305,7 @@ trachea:{name:'Trachea and airways',sys:'Respiratory',sw:'#a9e4ff',trip:'lungs',
 lungs:{name:'Lungs',sys:'Respiratory',sw:'#5ad1ff',trip:'lungs',mkL:9,does:'Oxygen moves from the air into the blood here, and carbon dioxide moves out of the blood to be breathed out.',mk:'Her cells still get plenty of oxygen. The problem is that they are missing enough food molecules to react with it.'},
 heart:{name:'Heart',sys:'Circulatory',sw:'#e0344f',trip:'heart',mkL:9,ll:9,does:'A muscle that pumps blood all around the body, delivering food molecules and oxygen to every cell.',mk:'Her heart delivers blood fine, but that blood carries fewer food molecules than it should.',lesson:'Lesson 9: How can a problem in one body system cause problems in other systems?'},
 vessels:{name:'Blood vessels',sys:'Circulatory',sw:'#ff5470',trip:'heart',mkL:9,ll:9,does:'Tubes that carry blood everywhere. Red ones carry blood away from the heart, blue ones bring it back, and the purple one carries food-rich blood from the intestine to the liver. (Real blood is always red, the colors are just a map.)',mk:'Molecules absorbed in the small intestine ride in the blood. That is how a digestive problem becomes a whole body problem.',lesson:'Lesson 9: How can a problem in one body system cause problems in other systems?'},
+brain:{name:'Brain',sys:'Nervous',sw:'#ff7ad9',need:16,mkL:16,does:'The control center of the body. It takes in information from your senses, makes decisions, stores memories and sends commands to every part of the body.',mk:'The brain uses about a fifth of the body\'s energy and runs mostly on sugar from the blood. With less sugar getting absorbed, M\'Kenna\'s brain has a smaller fuel supply.'},
 cell:{name:'Body cell',sys:'Cells',sw:'#b892ff',trip:'cell',mkL:10,ll:10,need:10,does:'Every cell uses food molecules in two ways: as building blocks to grow and repair, and as fuel. Mitochondria combine sugar with oxygen to release energy.',eq:'sugar + oxygen → carbon dioxide + water + energy',mk:'Fewer molecules reach her cells, so they have less fuel and fewer building blocks. That helps explain her tiredness, weight loss and slow growth.',lesson:'Lesson 10: Why is M\'Kenna losing so much weight?'}
 };
 const TRIP_LESSON={stomach:2,si:3,si8:8,li:4,heart:9,lungs:9,cell:10,cellmito:12,cellmk:13};
@@ -365,7 +378,7 @@ o.material=orgMat(opts);if(id==='lungs'){o.renderOrder=2;o.material.depthWrite=f
 if(id==='largeInt'){o.material.onBeforeCompile=sh=>{sh.uniforms.uMk=U.mk;sh.vertexShader='uniform float uMk;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=normal*.035*uMk;')};liMesh=o}
 reg(id,o)});
 const paths=await loadJSON('models/paths_out.json');buildJourney(paths);buildGas(paths);
-bodyReady=true;hideLoading();applyDim(filterSet());
+bodyReady=true;hideLoading();applyDim(filterSet());addHeadBrain();
 }
 
 function refreshEmissive(){for(const id in PM){const lv=id===selected?.32:id===hovered?.2:0;const c=new THREE.Color(P[id]?P[id].sw:'#ffffff');PM[id].forEach(m=>{if(m.material.emissive)m.material.emissive.copy(c).multiplyScalar(lv)})}}
@@ -386,6 +399,7 @@ const p=P[id];
 const tp=p.trip,lk=tp?TRIP_LESSON[tp]:0,open=tp&&has(lk);
 $('infoBody').innerHTML=`<div class="sys" style="color:${SYS[p.sys]}">● ${p.sys==='Cells'?'Cells':p.sys+' system'}</div><h2>${p.name}</h2>${open?`<button class="gobtn hot" id="goIn">Go inside ▶</button>`:''}<p>${p.does}</p>${p.eq&&has(12)?`<div class="eq">${p.eq}</div>`:''}${has(p.mkL)?`<div class="mk"><b>In M'Kenna's case</b><p>${p.mk}</p></div>`:''}${p.lesson&&has(p.ll)?`<div class="lesson">${p.lesson}</div>`:''}`;
 const gb=$('goIn');if(gb)gb.onclick=()=>enterTrip(tp);
+if(id==='brain'){const bb=document.createElement('button');bb.className='gobtn hot';bb.textContent='Explore the brain ▶';bb.onclick=()=>enterBrain();$('infoBody').insertBefore(bb,$('infoBody').children[2])}
 info.classList.remove('hidden','show');void info.offsetWidth;info.classList.add('show');
 const box=new THREE.Box3();PM[id].forEach(m=>box.expandByObject(m));
 const c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3()).length();
@@ -401,7 +415,9 @@ $('menu').onclick=()=>$('side').classList.toggle('open');
 function setMode(m){if(m==='mk'&&!mkAllowed())return;mode=m;document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));$('swap').classList.toggle('ismk',m==='mk')}
 document.querySelectorAll('#swap button,#tripMode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 
-function refreshLocks(){
+let headBrain=null,headBrainLoading=false;
+async function addHeadBrain(){if(headBrain||headBrainLoading||!has(BRAIN_L)||!bodyReady)return;headBrainLoading=true;try{if(!brainGLB)brainGLB=await loadGLB('models/brain.glb');const grp=new THREE.Group();brainGLB.scene.traverse(o=>{if(o.isMesh&&brainPartId(o.name)&&!o.name.startsWith('arteries')){const m=new THREE.Mesh(o.geometry,orgMat());grp.add(m);reg('brain',m)}});grp.scale.setScalar(.6);grp.position.set(0,4.55,.03);scene.add(grp);headBrain=grp;applyDim(filterSet());buildList()}catch(e){console.error(e)}headBrainLoading=false}
+function refreshLocks(){addHeadBrain();
 $('swap').classList.toggle('hidden',!canBody());buildCmp();
 $('play').classList.toggle('hidden',!(has(7)||has(9)));
 $('play').textContent=journey?'■ Stop':'▶ Follow the food';
@@ -415,18 +431,19 @@ buildList();if(selected&&partVisible(selected))select(selected);renderLessons();
 
 function renderLessons(){
 const el=$('lessonList');el.innerHTML='';
-const open=LESSONS.filter(l=>has(l.n));
+const open=LESSONS.filter(l=>has(l.n)).sort((a,b)=>a.n-b.n);
 $('modalSub').textContent=open.length?'Enter a new code from your teacher to open the next lesson.':'Enter the code from your teacher to start.';
 $('lockAll').classList.toggle('hidden',!open.length);
 open.forEach(l=>{const d=document.createElement('div');d.className='les open';
 const acts=l.acts.map(a=>`<button class="hot" data-go="${a[0]}">${a[1]} ▶</button>`).join('');
-d.innerHTML=`<div class="num">${l.n}</div><div class="t"><div class="q">Lesson ${l.n}: ${l.q}</div><div class="u">${l.u}</div></div><div class="acts">${acts}</div>`;el.appendChild(d)});
+d.innerHTML=`<div class="num">${l.badge||l.n}</div><div class="t"><div class="q">${l.label?l.label+': '+l.q:'Lesson '+l.n+': '+l.q}</div><div class="u">${l.u}</div></div><div class="acts">${acts}</div>`;el.appendChild(d)});
 el.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{closeModal();goTo(b.dataset.go)});
 }
-function leaveNow(){if(trip){if(trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;$('tripUI').classList.add('hidden')}if(lab){lab=null;labControls.enabled=false;$('labUI').classList.add('hidden');$('labLabels').innerHTML=''}document.body.classList.remove('intrip');controls.enabled=true}
+function leaveNow(){if(lab&&lab===brainView){lab.savedCam=labCam.position.clone();lab.savedT=labControls.target.clone();$('tip').style.display='none';canvas.style.cursor=''}if(trip){if(trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;$('tripUI').classList.add('hidden')}if(lab){lab=null;labControls.enabled=false;$('labUI').classList.add('hidden');$('labLabels').innerHTML=''}document.body.classList.remove('intrip');controls.enabled=true}
 function goTo(g){
 const [k,v]=g.split(':');
 if(k==='body'){leaveNow();updateBodyGate();return}
+if(k==='brain'){enterBrain();return}
 if(k==='trip'){if(lab)leaveNow();enterTrip(v);return}
 if(k==='lab'){enterLab(v);return}
 if(k==='panel'){openPanel(v);return}
@@ -439,7 +456,7 @@ $('lessonsBtn').onclick=()=>openModal();
 $('closeModal').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
 function submitCode(){const r=tryCode($('codeIn').value);const m=$('codeMsg');if(!r){m.textContent="That code didn't match any lesson. Check the spelling and try again.";m.className='bad';return}
-$('codeIn').value='';m.className='good';m.textContent=r==='all'?'Teacher code: every lesson is unlocked.':`Unlocked Lesson ${r.n}!`;toast(r==='all'?'All lessons unlocked':`Lesson ${r.n} unlocked`);refreshLocks();if(trip)renderStop();$('closeModal').classList.toggle('hidden',modalLocked());updateBodyGate()}
+$('codeIn').value='';m.className='good';m.textContent=r==='all'?'Teacher code: every lesson is unlocked.':(r.badge?'Unlocked the brain!':`Unlocked Lesson ${r.n}!`);toast(r==='all'?'All lessons unlocked':(r.badge?'The brain is unlocked':`Lesson ${r.n} unlocked`));refreshLocks();if(trip)renderStop();$('closeModal').classList.toggle('hidden',modalLocked());updateBodyGate()}
 $('codeBtn').onclick=submitCode;$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')submitCode()});
 $('lockAll').onclick=()=>$('lockConfirm').classList.remove('hidden');
 $('lockNo').onclick=()=>$('lockConfirm').classList.add('hidden');
@@ -489,12 +506,12 @@ const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),tip=$('tip');
 function hit(e){const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mouse,camera);const h=ray.intersectObjects(pick,false).filter(x=>!x.object.userData.off&&x.object.visible&&partVisible(x.object.userData.id));return h.length?h[0].object.userData.id:null}
 let down=null,dragLook=null;
 canvas.addEventListener('pointermove',e=>{
-if(lab)return;
+if(lab){if(lab.hover)lab.hover(e);return}
 if(trip){if(dragLook){trip.yaw-=(e.clientX-dragLook[0])*.004;trip.pitch=clamp(trip.pitch-(e.clientY-dragLook[1])*.004,-1.2,1.2);trip.yaw=clamp(trip.yaw,-2.6,2.6);dragLook=[e.clientX,e.clientY]}return}
 if(e.pointerType!=='mouse'||!bodyReady)return;const id=hit(e);if(id!==hovered){hovered=id;refreshEmissive()}canvas.style.cursor=id?'pointer':'grab';if(id){tip.style.display='block';tip.textContent=P[id].name;tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+10+'px'}else tip.style.display='none'});
 canvas.addEventListener('pointerleave',()=>{hovered=null;refreshEmissive();tip.style.display='none'});
 canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];$('hint').style.opacity=0;if(trip){dragLook=[e.clientX,e.clientY];canvas.setPointerCapture&&canvas.setPointerCapture(e.pointerId)}});
-canvas.addEventListener('pointerup',e=>{const wasDown=down;down=null;dragLook=null;if(!wasDown||lab)return;const moved=Math.hypot(e.clientX-wasDown[0],e.clientY-wasDown[1])>6;if(moved)return;if(trip){tripClick(e);return}if(!bodyReady)return;const id=hit(e);if(id)select(id)});
+canvas.addEventListener('pointerup',e=>{const wasDown=down;down=null;dragLook=null;if(!wasDown)return;if(lab){if(lab.click&&Math.hypot(e.clientX-wasDown[0],e.clientY-wasDown[1])<=6)lab.click(e);return}const moved=Math.hypot(e.clientX-wasDown[0],e.clientY-wasDown[1])>6;if(moved)return;if(trip){tripClick(e);return}if(!bodyReady)return;const id=hit(e);if(id)select(id)});
 canvas.addEventListener('wheel',e=>{if(trip){e.preventDefault();trip.goal=null;trip.u=clamp(trip.u+(e.deltaY>0?1:-1)*.4/trip.len(),.004,.996)}},{passive:false});
 const keys={};
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.key.toLowerCase()]=true;if(e.key==='Escape'){if(!$('modal').classList.contains('hidden'))closeModal();else if(!$('panel').classList.contains('hidden'))$('panel').classList.add('hidden');else if(trip)exitTrip();else if(lab)exitLab();else select(null)}if(trip&&e.key==='ArrowRight')goStop(trip.stopIdx+1);if(trip&&e.key==='ArrowLeft')goStop(trip.stopIdx-1)});
@@ -928,14 +945,14 @@ return W}
 
 function enterLab(id){const L=LABS[id];if(!L||!has(L.lesson))return;
 if(trip)leaveNow();select(null);if(journey)stopJourney();$('panel').classList.add('hidden');$('modal').classList.add('hidden');$('labLabels').innerHTML='';
-lab=L.group==='digest'?buildDigest(id):buildReact(id);lab.id=id;
+if(lab)leaveNow();lab=L.group==='digest'?buildDigest(id):buildReact(id);lab.id=id;labControls.minDistance=5;labControls.maxDistance=32;$('labTabs').classList.remove('tools');
 document.body.classList.add('intrip');$('bodyUI').classList.add('hidden');$('labUI').classList.remove('hidden');$('tip').style.display='none';
 controls.enabled=false;labControls.enabled=true;labControls.target.set(...lab.target);labCam.position.set(...lab.cam);labCam.lookAt(labControls.target);
 $('labTitle').textContent=L.group==='digest'?'Molecule lab':'Reaction lab';
 const tabs=$('labTabs');tabs.innerHTML='';Object.keys(LABS).filter(k=>LABS[k].group===L.group&&has(LABS[k].lesson)).forEach(k=>{const b=document.createElement('button');b.textContent=LABS[k].tab;b.classList.toggle('on',k===id);b.onclick=()=>enterLab(k);tabs.appendChild(b)});
 tabs.classList.toggle('hidden',tabs.children.length<2);
 renderLabCard()}
-function renderLabCard(){if(!lab)return;$('labCard').innerHTML=lab.card();const g=$('labGo');if(g)g.onclick=()=>lab.start();const r=$('labReset');if(r)r.onclick=()=>lab.reset()}
+function renderLabCard(){if(!lab)return;$('labCard').innerHTML=lab.card();if(lab.bind)lab.bind();const g=$('labGo');if(g)g.onclick=()=>lab.start();const r=$('labReset');if(r)r.onclick=()=>lab.reset()}
 function updateLab(dt,time){lab.update(dt,time)}
 function exitLab(){leaveNow();updateBodyGate();if(!canBody())openModal()}
 $('exitLab').onclick=exitLab;
@@ -970,6 +987,188 @@ $('closePanel').onclick=()=>{$('panel').classList.add('hidden');updateBodyGate()
 $('panel').addEventListener('click',e=>{if(e.target===$('panel')){$('panel').classList.add('hidden');updateBodyGate()}});
 
 
+const BRAIN_L=16;
+const BP={
+frontal:{name:'Frontal lobe',col:'#7fb8ff',does:'Plans, makes decisions, solves problems and helps you focus and control what you do. The strip along its back edge sends the commands that move your muscles.',fact:'It is the last part of the brain to finish developing, in your mid-20s.'},
+parietal:{name:'Parietal lobe',col:'#ffd166',does:'Handles touch, temperature and pain, and keeps track of where your body is in space.',fact:'The strip along its front edge holds a map of your whole body.'},
+temporal:{name:'Temporal lobe',col:'#7ee0a1',does:'Processes sounds and language, and helps store memories.',fact:'It sits right beside your ears.'},
+occipital:{name:'Occipital lobe',col:'#ff9ad5',does:'Turns signals from your eyes into the pictures you see.',fact:'It is at the very back of your head, about as far from your eyes as the brain gets.'},
+cerebellum:{name:'Cerebellum',col:'#ffb070',does:'Coordinates balance and smooth, precise movement, like riding a bike or catching a ball.',fact:'It is only about a tenth of the brain\'s size, but holds more than half of its neurons.'},
+brainstem:{name:'Brainstem',col:'#c9b6ff',does:'Runs the automatic jobs that keep you alive: breathing, heartbeat, swallowing and sleeping.',fact:'It connects the brain to the spinal cord.'},
+spinal:{name:'Spinal cord',col:'#e8dccb',does:'A thick bundle of nerves that carries messages between the brain and the rest of the body.',fact:'Some quick reflexes, like pulling your hand off something hot, happen here before the brain even knows.'},
+callosum:{name:'Corpus callosum',col:'#ffffff',does:'A thick bridge of nerve fibers that lets the left and right halves of the brain share information.',fact:'It contains around 200 million nerve fibers.'},
+thalamus:{name:'Thalamus',col:'#d8b8ff',does:'A relay station. Almost every message from your senses passes through here on its way to the outer brain.',fact:'Smell is the one sense that mostly skips it.'},
+hypothalamus:{name:'Hypothalamus',col:'#ffb98a',does:'Controls hunger, thirst, body temperature and sleep. It is the part that tells you when you are hungry.',fact:'It is only about the size of an almond.',mk:'It watches signals about how much fuel and energy the body has, which ties it to how the body handles food.'},
+pituitary:{name:'Pituitary gland',col:'#ff8fb0',does:'A pea-sized gland that releases hormones, including growth hormone, which helps your body grow.',fact:'It is controlled by the hypothalamus right above it.',mk:'Growing takes building blocks from food. Without enough of them, the body can\'t grow as expected, even when growth signals are sent.'},
+hippocampus:{name:'Hippocampus',col:'#ffd27a',does:'Helps turn new experiences into long-term memories and helps you find your way around.',fact:'It is named after the Greek word for seahorse because of its curved shape.'},
+amygdala:{name:'Amygdala',col:'#ff7070',does:'Processes strong emotions like fear and excitement.',fact:'There is one on each side, each about the size of an almond.'},
+basal:{name:'Basal ganglia',col:'#8fe0a0',does:'Help start movements smoothly and form habits, like brushing your teeth without thinking about it.',fact:'The curved part is called the caudate, which means "having a tail".'},
+ventricles:{name:'Ventricles',col:'#7fc3ff',does:'Connected spaces deep inside the brain, filled with clear fluid that cushions the brain and carries away waste.',fact:'Your body makes about two cups of this fluid every day.'},
+optic:{name:'Optic nerves',col:'#fff2c8',does:'Carry signals from your eyes to the brain. They meet in an X shape where some fibers cross to the other side.',fact:'Each one holds about a million nerve fibers.'},
+arteries:{name:'Blood vessels',col:'#ff5a6a',does:'Deliver a constant supply of blood with oxygen and sugar. The brain can\'t store much fuel, so it needs blood every second.',fact:'If blood flow stops for just a few seconds, a person can pass out.',mk:'This blood brings the sugar that came from digested food. In M\'Kenna, less sugar is absorbed, so her brain\'s supply is smaller.'}
+};
+const BEX={frontal:[0,.12,.55],parietal:[0,.5,-.05],temporal:[.35,-.25,.1],occipital:[0,.05,-.6],cerebellum:[0,-.45,-.8],brainstem:[0,-.8,-.15],spinal:[0,-1.05,-.15],callosum:[0,.4,0],thalamus:[0,.05,0],hypothalamus:[0,-.3,.25],pituitary:[0,-.5,.45],hippocampus:[0,-.3,-.15],amygdala:[0,-.35,.3],basal:[0,.15,.1],ventricles:[0,.22,0],optic:[0,-.25,.65],arteries:[0,0,0]};
+const CORTEX=['frontal','parietal','temporal','occipital'];
+SYS.Nervous='#ff7ad9';
+let brainGLB=null,brainView=null;
+async function getBrainGLB(){if(!brainGLB){showLoading('Loading the brain',0);try{brainGLB=await loadGLB('models/brain.glb',p=>showLoading('Loading the brain',p))}finally{hideLoading()}}return brainGLB}
+function brainPartId(n){const b=n.split('_')[0];return BP[b]?b:null}
+function buildBrain(g){
+const s=labScene(0x0b1024);const W={scene:s,id:'brain',meshes:[],byId:{},sel:null,hov:null,exT:0,exGoal:0,showEx:false,xray:false,xT:0,slice:null,slPos:.3,planeArr:[],colorLobes:false,energy:false,mk:false,cam:innerWidth/innerHeight>1.1?[2.3,.9,3.1]:[3.6,.6,4.4],target:innerWidth/innerHeight>1.1?[-.62,-.2,.2]:[0,-.55,0],tw:null,sparks:[]};
+const rim=new THREE.DirectionalLight(0x9fb8ff,.6);rim.position.set(-4,2,-5);s.add(rim);
+W.plane=new THREE.Plane(new THREE.Vector3(-1,0,0),.3);
+const list=[];g.scene.traverse(o=>{if(o.isMesh)list.push(o)});
+const root=new THREE.Group();s.add(root);W.root=root;
+list.forEach(o=>{const id=brainPartId(o.name);if(!id)return;const m=o.clone();m.geometry=o.geometry;
+const cortex=CORTEX.includes(id)||id==='cerebellum';
+const mat=new THREE.MeshPhysicalMaterial({vertexColors:true,color:0xffffff,roughness:cortex?.58:.45,clearcoat:cortex?.4:.6,clearcoatRoughness:.4,side:THREE.DoubleSide,clippingPlanes:W.planeArr,transparent:false,opacity:1});
+mat.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nif(!gl_FrontFacing){diffuseColor.rgb=vec3(.92,.86,.8);}')};
+m.material=mat;m.userData.id=id;m.userData.side=o.name.endsWith('_L')?1:o.name.endsWith('_R')?-1:0;m.userData.base=m.position.clone();root.add(m);W.meshes.push(m);(W.byId[id]=W.byId[id]||[]).push(m)});
+const glowG=new THREE.SphereGeometry(.011,8,6);const glowM=new THREE.MeshBasicMaterial({color:0xffc861,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,clippingPlanes:W.planeArr});
+W.meshes.filter(m=>CORTEX.includes(m.userData.id)||m.userData.id==='cerebellum').forEach(m=>{const n=46;const im=new THREE.InstancedMesh(glowG,glowM,n);const pts=sampleSurface(m,n);im.userData.pts=pts.map(([p,nn])=>({p:p.clone().addScaledVector(nn,.008),ph:Math.random()*100,r:rnd(.6,1.6)}));m.add(im);W.sparks.push(im)});
+W.applyMats=()=>{W.meshes.forEach(m=>{const id=m.userData.id,cortex=CORTEX.includes(id)||id==='cerebellum';const mat=m.material;
+const want=cortex&&W.xray;if(mat.transparent!==want){mat.transparent=want;mat.depthWrite=!want;mat.needsUpdate=true}
+mat.color.set(W.colorLobes&&(cortex||id==='brainstem'||id==='spinal')?BP[id].col:'#ffffff')})};
+W.highlight=()=>{W.meshes.forEach(m=>{const id=m.userData.id;const lv=id===W.sel?.35:id===W.hov?.2:0;m.material.emissive.set(BP[id].col).multiplyScalar(lv)})};
+W.setPlane=()=>{const ax=W.slice;W.planeArr.length=0;if(!ax)return;const n=ax==='side'?[-1,0,0]:ax==='top'?[0,-1,0]:[0,0,-1];W.plane.normal.set(...n);const rng=ax==='side'?.95:ax==='top'?.8:1.2;W.plane.constant=W.slPos*rng;W.planeArr.push(W.plane)};
+W.pick=e=>{const r=canvas.getBoundingClientRect();mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mouse,labCam);const h=ray.intersectObjects(W.meshes,false).filter(x=>{if(!x.object.visible)return false;if(W.planeArr.length&&W.plane.distanceToPoint(x.point)<0)return false;const id=x.object.userData.id;if(W.xray&&(CORTEX.includes(id)||id==='cerebellum'))return false;return true});return h.length?h[0].object.userData.id:null};
+W.hover=e=>{if(e.pointerType!=='mouse')return;const id=W.pick(e);if(id!==W.hov){W.hov=id;W.highlight()}canvas.style.cursor=id?'pointer':'grab';const tip=$('tip');if(id){tip.style.display='block';tip.textContent=BP[id].name;tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+10+'px'}else tip.style.display='none'};
+W.click=e=>{const id=W.pick(e);W.select(id)};
+W.home=()=>{const c=new THREE.Vector3(...W.target);W.tw={t0:labControls.target.clone(),t1:c,c0:labCam.position.clone(),c1:new THREE.Vector3(...W.cam),k:0}};
+W.select=id=>{const had=W.sel;W.sel=id;if(id&&['callosum','thalamus','hypothalamus','hippocampus','amygdala','basal','ventricles'].includes(id)&&!W.xray&&!W.planeArr.length&&W.exGoal<.3){W.xray=true;W.applyMats();W.syncTools()}W.highlight();renderLabCard();if(!id){if(had)W.home();return}const box=new THREE.Box3();W.byId[id].forEach(m=>box.expandByObject(m));const c=box.getCenter(new THREE.Vector3());const sz=box.getSize(new THREE.Vector3()).length();const dir=labCam.position.clone().sub(labControls.target).normalize();W.tw={t0:labControls.target.clone(),t1:c,c0:labCam.position.clone(),c1:c.clone().add(dir.multiplyScalar(Math.max(1.6,sz*1.8))),k:0}};
+W.card=()=>{let h='';
+if(W.showEx)h+=`<div class="ctl"><b>Pull apart</b><input type="range" id="exR" min="0" max="100" value="${Math.round(W.exGoal*100)}"></div>`;
+if(W.slice)h+=`<div class="ctl"><b>Slice</b><div class="seg">${[['side','Side'],['top','Top'],['front','Front']].map(a=>`<button data-ax="${a[0]}" class="${W.slice===a[0]?'on':''}">${a[1]}</button>`).join('')}</div><input type="range" id="slR" min="-100" max="100" value="${Math.round(W.slPos*100)}"></div>`;
+if(W.energy){const sug=W.mk?35:92,act=W.mk?48:90;h+=`<div class="step">Brain power</div><h3>The brain runs on sugar</h3><p>Your brain is only about 2% of your body's weight, but it uses about 20% of your body's energy. Its main fuel is sugar (glucose) carried in your blood. It can't store much, so it needs a steady supply all day.</p><div class="seg" style="margin-bottom:10px"><button data-bm="n" class="${W.mk?'':'on'}">Normal body</button><button data-bm="mk" class="${W.mk?'on':''}">M'Kenna</button></div><div class="bars"><span>Sugar arriving</span><div class="bar"><div style="width:${sug}%;background:${sug>70?'#6ee7b0':'#ff8a5c'}"></div></div><span>Brain activity</span><div class="bar"><div style="width:${act}%;background:${act>70?'#6ee7b0':'#ffd166'}"></div></div></div>${W.mk?`<div class="mk"><b>In M'Kenna's body</b><p>Less sugar gets absorbed from her food, so less reaches her brain through the blood. Less fuel for brain cells is one reason someone can feel tired and have trouble focusing. Watch the twinkling activity on the brain slow down.</p></div>`:''}`}
+if(W.sel){const p=BP[W.sel];h+=`<div class="step" style="color:${p.col}">● Brain part</div><h3>${p.name}</h3><p>${p.does}</p><p class="small">⭐ ${p.fact}</p>${p.mk?`<div class="mk"><b>M'Kenna connection</b><p>${p.mk}</p></div>`:''}<div class="nav"><button id="bAll">◀ All parts</button></div>`}
+else if(!W.energy){h+=`<div class="step">Brain explorer</div><h3>Click any part of the brain</h3><p class="small">Drag to turn it, scroll or pinch to zoom. Use the tools at the top to pull it apart, slice it, see through it, or go inside.</p><div class="chips">${Object.keys(BP).map(k=>`<button data-bp="${k}"><span class="dot" style="background:${BP[k].col}"></span>${BP[k].name}</button>`).join('')}</div>`}
+return h};
+W.bind=()=>{const ex=$('exR');if(ex)ex.oninput=()=>{W.exGoal=ex.value/100};const sl=$('slR');if(sl)sl.oninput=()=>{W.slPos=sl.value/100;W.setPlane()};
+$('labCard').querySelectorAll('[data-ax]').forEach(b=>b.onclick=()=>{W.slice=b.dataset.ax;W.setPlane();renderLabCard()});
+$('labCard').querySelectorAll('[data-bp]').forEach(b=>b.onclick=()=>W.select(b.dataset.bp));
+$('labCard').querySelectorAll('[data-bm]').forEach(b=>b.onclick=()=>{W.mk=b.dataset.bm==='mk';renderLabCard()});
+const ba=$('bAll');if(ba)ba.onclick=()=>W.select(null)};
+W.tools=()=>{const T=$('labTabs');T.innerHTML='';T.classList.remove('hidden');T.classList.add('tools');
+[['ex','Pull apart',()=>{W.showEx=!W.showEx;if(!W.showEx)W.exGoal=0;else{if(W.exGoal===0)W.exGoal=.6;W.sel=null;W.highlight();W.home()}}],['xr','X-ray',()=>{W.xray=!W.xray;W.applyMats()}],['sl','Slice',()=>{W.slice=W.slice?null:'side';W.setPlane();if(W.slice){W.sel=null;W.highlight();W.home()}}],['cl','Color lobes',()=>{W.colorLobes=!W.colorLobes;W.applyMats()}],['en','Energy',()=>{W.energy=!W.energy;if(W.energy)W.sel=null}],['fly','Fly inside ▶',()=>enterTrip('brainv')],['neu','Neurons ▶',()=>enterTrip('neuron')]].forEach(([k,label,fn])=>{const b=document.createElement('button');b.textContent=label;b.dataset.t=k;b.onclick=()=>{fn();W.syncTools();renderLabCard()};T.appendChild(b)});W.syncTools()};
+W.syncTools=()=>{const on={ex:W.showEx,xr:W.xray,sl:!!W.slice,cl:W.colorLobes,en:W.energy};$('labTabs').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',!!on[b.dataset.t]);if(b.dataset.t==='fly'||b.dataset.t==='neu')b.classList.add('hot')})};
+W.update=(dt,time)=>{
+W.exT+=(W.exGoal-W.exT)*Math.min(1,dt*5);
+W.meshes.forEach(m=>{const id=m.userData.id,e=BEX[id],sd=m.userData.side;const off=new THREE.Vector3(sd*.55+sd*e[0],e[1],e[2]).multiplyScalar(W.exT);m.position.copy(m.userData.base).add(off);if(id==='arteries')m.visible=W.exT<.04;
+const cortex=CORTEX.includes(id)||id==='cerebellum';if(cortex&&m.material.transparent)m.material.opacity=.15});
+if(W.tw){W.tw.k=Math.min(1,W.tw.k+dt*1.8);const e=1-Math.pow(1-W.tw.k,3);labControls.target.lerpVectors(W.tw.t0,W.tw.t1,e);labCam.position.lerpVectors(W.tw.c0,W.tw.c1,e);if(W.tw.k>=1)W.tw=null}
+const rate=W.mk&&W.energy?.35:1,mm=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3();
+W.sparks.forEach(im=>{im.visible=!W.xray;im.userData.pts.forEach((p,i)=>{const v=Math.sin(time*p.r*2.2*rate+p.ph);const k=Math.pow(Math.max(0,v),14)*(W.mk&&W.energy&&i%3?0:1);sc.setScalar(.0001+k*1.4);mm.compose(p.p,q,sc);im.setMatrixAt(i,mm)});im.instanceMatrix.needsUpdate=true});
+if(W.byId.arteries)W.byId.arteries.forEach(m=>m.material.emissive.setRGB(.25+.15*Math.max(0,Math.sin(time*(W.mk&&W.energy?4:7))),0,0))};
+return W}
+async function enterBrain(){if(!has(BRAIN_L))return;
+if(trip)leaveNow();if(lab&&lab!==brainView)leaveNow();select(null);if(journey)stopJourney();$('panel').classList.add('hidden');$('modal').classList.add('hidden');$('labLabels').innerHTML='';
+if(!brainView){try{brainView=buildBrain(await getBrainGLB());brainView.first=true}catch(err){console.error(err);toast('Could not load the brain. Try again.');return}}
+lab=brainView;renderer.localClippingEnabled=true;
+document.body.classList.add('intrip');$('bodyUI').classList.add('hidden');$('labUI').classList.remove('hidden');$('tip').style.display='none';
+controls.enabled=false;labControls.enabled=true;labControls.minDistance=1;labControls.maxDistance=14;
+if(lab.first||!lab.savedCam){labControls.target.set(...lab.target);labCam.position.set(...lab.cam);lab.first=false}else{labControls.target.copy(lab.savedT);labCam.position.copy(lab.savedCam)}
+labCam.lookAt(labControls.target);$('labTitle').textContent='The brain';lab.tools();renderLabCard()}
+
+TRIPS.brainv={markerRange:5,lesson:BRAIN_L,file:'in_brain',title:'Inside the brain',fog:0x1c1216,bg:0x0e080b,speed:2.2,back:'brain',next:'neuron',nextLabel:'Ride along a neuron ▶',
+build(g,d){
+const T={};const s=new THREE.Scene();s.background=new THREE.Color(this.bg);s.fog=new THREE.Fog(this.fog,1.2,10);T.scene=s;
+s.add(new THREE.HemisphereLight(0xfff0f0,0x302030,.32));s.add(tripCam);
+const cv=mkCurve(d.path);T.curves=[cv];
+const wall=g.scene.getObjectByName('ventricle_wall');wall.material=wetMat({clearcoat:.8,roughness:.42,color:0xc8a2a6});s.add(wall);
+const ch=g.scene.getObjectByName('choroid');ch.material=wetMat({clearcoat:1,roughness:.3});s.add(ch);T.ch=ch;
+const cp=sampleSurface(ch,120);
+T.fl=new THREE.InstancedMesh(new THREE.SphereGeometry(.016,8,6),new THREE.MeshStandardMaterial({color:0xbfe6ff,emissive:0x3a7aa0,transparent:true,opacity:.7}),260);s.add(T.fl);
+T.fd=[];for(let i=0;i<260;i++){const src=i<90?cp[i%cp.length]:null;T.fd.push({src,u:rnd(0,1),r:rnd(.2,1.1),th:rnd(0,6.28),t:rnd(0,1),sp:rnd(.6,1.3)})}
+const near=p=>{let best=0,bd=1e9;for(let k=0;k<=200;k++){const q=cv.c.getPointAt(k/200);const dd=q.distanceToSquared(p);if(dd<bd){bd=dd;best=k/200}}return best};
+const mk=(p,o)=>v3(p).add(new THREE.Vector3(...(o||[0,.5,0])));
+T.stops=[
+{u:.02,title:'Inside a ventricle',text:'You are floating in one of the brain\'s ventricles, a hollow space deep inside the brain filled with clear fluid. There is one of these on each side.',mark:mk(d.path[20])},
+{u:near(v3(d.choroid[5]).add(new THREE.Vector3(.2,.75,-.6))),title:'Making the fluid',text:'The red, bumpy ribbon is the choroid plexus. It is full of tiny blood vessels, and it filters blood to make the clear fluid (the floating specks) that fills these spaces.',look:v3(d.choroid[5]),mark:v3(d.choroid[6]).add(new THREE.Vector3(0,.35,0))},
+{u:near(v3([1.85,.65,2.0])),title:'Wall of the basal ganglia',text:'The bulge in the wall is the caudate, part of the basal ganglia that help you start movements and build habits.',look:v3(d.caud),mark:v3(d.caud).add(new THREE.Vector3(-.9,.4,0))},
+{u:near(v3([.25,-1.35,2.9])),title:'A small doorway',text:'The fluid squeezes through a small opening into the middle of the brain.',mark:mk([.5,-1.0,3.3])},
+{u:near(v3([0,-1.9,-.2])),title:'Between the thalamus',text:'This narrow middle space has the thalamus on both sides, the relay station for messages from your senses.',look:v3(d.thal),mark:v3([0,-1.3,0])},
+{u:near(v3([0,-2.9,-2.8])),title:'The narrow channel',text:'A thin tube carries the fluid down through the brainstem, which controls breathing and heartbeat.',mark:mk([0,-2.9,-2.8],[.4,.3,0])},
+{u:near(v3([0,-4.75,-5.8])),title:'Under the cerebellum',text:'This wider space sits right under the cerebellum, the part that keeps you balanced.',look:v3(d.cbl),mark:v3(d.cbl).add(new THREE.Vector3(0,-.6,.6))},
+{u:.97,title:'Out around the brain',text:'The fluid flows out and wraps around the whole brain and spinal cord, cushioning them like a water pillow. Then the body reabsorbs it into the blood.',mark:mk(d.path[396],[0,.6,0])}];
+return T},
+update(T,dt,time,cu){tripLight.intensity=.75;const cv=T.curves[0],m=new THREE.Matrix4(),p=new THREE.Vector3(),q=new THREE.Quaternion(),sc=new THREE.Vector3();
+T.fd.forEach((o,i)=>{if(o.src){o.t+=dt*.25*o.sp;if(o.t>1)o.t=0;p.copy(o.src[0]).addScaledVector(o.src[1],.05+o.t*.6);p.y+=o.t*.3}else{o.u+=dt*.5*o.sp/cv.len;if(o.u>cu+.08)o.u=cu-rnd(0,.02);if(o.u<cu-.03)o.u=cu+rnd(0,.08);o.th+=dt*.3;pathPoint(cv,o.u,o.r,o.th,p)}
+const g=(o.src?Math.sin(o.t*Math.PI):1)*(p.distanceToSquared(tripCam.position)<.2?0:1);sc.setScalar(g);m.compose(p,q,sc);T.fl.setMatrixAt(i,m)});T.fl.instanceMatrix.needsUpdate=true}
+};
+
+function glowTex(){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(255,240,160,.9)');g.addColorStop(1,'rgba(255,200,80,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)}
+TRIPS.neuron={lesson:BRAIN_L,file:'neuron',title:'Ride along a neuron',fog:0x0a1030,bg:0x050816,speed:2.6,back:'brain',mkLesson:BRAIN_L,next:null,
+build(g,d){
+const T={};const s=new THREE.Scene();s.background=new THREE.Color(this.bg);s.fog=new THREE.Fog(this.fog,7,42);T.scene=s;
+s.add(new THREE.HemisphereLight(0xc8d4ff,0x201838,.85));const dl=new THREE.DirectionalLight(0xffffff,.6);dl.position.set(5,8,6);s.add(dl);s.add(tripCam);
+T.curves=d.paths.map(mkCurve);
+const get=n=>g.scene.getObjectByName(n);
+const neuron=new THREE.Group();s.add(neuron);
+const somaMat=new THREE.MeshPhysicalMaterial({vertexColors:true,transparent:true,opacity:.5,roughness:.3,clearcoat:.8,depthWrite:false,side:THREE.DoubleSide,emissive:0x000000});
+const memMat=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.35,clearcoat:.7});
+const myMat=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.4,clearcoat:.6});
+[['soma',somaMat],['nucleus',null],['nucleolus',null],['dendrites',memMat],['axon',memMat],['myelin',myMat],['terminals',memMat]].forEach(([n,mat])=>{const o=get(n);if(!o)return;o.material=mat||new THREE.MeshStandardMaterial({vertexColors:true,roughness:.4});if(n==='soma')o.renderOrder=3;neuron.add(o)});
+T.somaMat=somaMat;
+const forest=[];const rngPos=[[-7,1,-6,.4],[8,-2,-7,2.1],[-9,-6,2,4.0],[6,3,-14,1.2],[-4,-9,-9,5.0],[11,-8,3,3.1],[-12,2,-14,.9],[2,-4,-18,2.6]];
+rngPos.forEach(([x,y,z,r],i)=>{const c=neuron.clone();c.traverse(o=>{if(o.isMesh&&o.material===somaMat){o.material=somaMat.clone()}});c.position.set(x,y,z);c.rotation.set(rnd(-.3,.3),r,rnd(-.3,.3));c.scale.setScalar(rnd(.8,1.05));s.add(c);c.updateMatrixWorld(true);forest.push({g:c,next:rnd(.5,4),soma:c.children.find(o=>o.material&&o.material!==somaMat&&o.material.opacity<1)})});
+const astro=get('astrocyte');astro.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.45});
+[[3.6,-3.4,-2.6],[-3.4,3.4,-2.6],[6.2,.4,-3.5],[-2.8,-8,-1.2],[4.6,-11,-3]].forEach(([x,y,z],i)=>{const a=i?astro.clone():astro;a.position.set(x,y,z);a.rotation.set(rnd(0,3),rnd(0,3),0);a.scale.setScalar(rnd(.9,1.3));s.add(a)});
+const syn=new THREE.Group();s.add(syn);
+const bt=get('bouton');bt.material=new THREE.MeshPhysicalMaterial({vertexColors:true,transparent:true,opacity:.42,roughness:.25,clearcoat:.8,depthWrite:false,side:THREE.DoubleSide});bt.renderOrder=3;syn.add(bt);
+const ps=get('postsyn');ps.material=memMat;syn.add(ps);
+const sm=get('syn_mito');sm.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.4});syn.add(sm);
+T.ves=d.ves.map(v3);T.vesHome=T.ves.map(v=>v.clone());
+T.vm=new THREE.InstancedMesh(new THREE.SphereGeometry(.17,16,12),new THREE.MeshPhysicalMaterial({color:0xfff0b0,transparent:true,opacity:.75,roughness:.2,clearcoat:1}),T.ves.length);s.add(T.vm);
+T.vs=T.ves.map(()=>({st:0,t:0}));
+T.rec=d.rec.map(v3);T.rm=new THREE.InstancedMesh(new THREE.CylinderGeometry(.09,.11,.26,10),new THREE.MeshStandardMaterial({roughness:.4}),T.rec.length);T.rl=T.rec.map(()=>0);
+for(let i=0;i<T.rec.length;i++)T.rm.setColorAt(i,new THREE.Color(0x6a5acd));s.add(T.rm);
+T.nt=new THREE.InstancedMesh(new THREE.SphereGeometry(.05,8,6),new THREE.MeshBasicMaterial({color:0x7dffb0}),400);T.nt.count=0;s.add(T.nt);T.ntd=[];
+const tex=glowTex();T.spriteMat=new THREE.SpriteMaterial({map:tex,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,color:0xfff3a0});
+T.pool=[];for(let i=0;i<80;i++){const sp=new THREE.Sprite(T.spriteMat);sp.visible=false;sp.scale.setScalar(.6);s.add(sp);T.pool.push(sp)}
+T.pulses=[];T.charge=0;T.flash=0;T.fired=0;T.rate=0;T.forest=forest;T.d=d;
+T.dend=d.dend.map(p=>new THREE.CatmullRomCurve3(p.map(v3)));T.term=d.term.map(p=>new THREE.CatmullRomCurve3(p.map(v3)));
+T.ax=d.axon.map(v3);T.nodes=d.nodes.map(v3);T.axCurve=new THREE.CatmullRomCurve3(T.ax);
+T.ses=0;T.relT=0;
+const pm=(si,u,o)=>T.curves[si].c.getPointAt(u).add(new THREE.Vector3(...(o||[0,.6,0])));
+const near=(si,p)=>{const cv=T.curves[si];let best=0,bd=1e9;for(let k=0;k<=300;k++){const q=cv.c.getPointAt(k/300);const dd=q.distanceToSquared(p);if(dd<bd){bd=dd;best=k/300}}return best};
+const axAt=y=>{let b=T.ax[0];T.ax.forEach(p=>{if(Math.abs(p.y-y)<Math.abs(b.y-y))b=p});return b};
+T.stops=[
+{seg:0,u:.02,title:'The neuron forest',text:'You shrank down into the outer layer of the brain. Your brain has about 86 billion neurons, nerve cells that send electrical and chemical signals. The green star-shaped cells are astrocytes, helpers that feed and support neurons.',mark:pm(0,.05,[-.6,.4,0])},
+{seg:0,u:near(0,v3([3.2,3.6,3.4])),title:'Dendrites',text:'These branches pick up messages from other neurons. Watch the glowing signals travel in toward the cell body.',look:v3([.4,2.4,.3]),mark:v3([1.2,3.2,.8])},
+{seg:0,u:near(0,v3([1.9,1.2,2.0])),title:'The cell body',text:'The cell body holds the nucleus (the dark ball) with the cell\'s DNA. It adds up all the incoming signals. When they are strong enough, the neuron fires and the whole cell flashes.',look:v3([0,.1,0]),mark:v3([.7,1.1,.6]),hud:true},
+{seg:0,u:near(0,axAt(-4).clone().add(new THREE.Vector3(1.75,.3,1.55))),title:'Axon and myelin',text:'The axon is the long cable that carries the signal away. The white myelin wraps it like the plastic around a wire, so the signal doesn\'t leak out.',look:axAt(-5),mark:axAt(-4).clone().add(new THREE.Vector3(.5,.3,.4))},
+{seg:0,u:near(0,axAt(-8.4).clone().add(new THREE.Vector3(1.75,.3,1.55))),title:'The jumping signal',text:'Watch the signal leap from gap to gap between the myelin pieces. Jumping makes it fast: in some neurons signals reach about 120 meters per second, faster than a race car.',look:axAt(-9.8),mark:axAt(-9).clone().add(new THREE.Vector3(.5,.3,.4))},
+{seg:0,u:.97,title:'Axon terminals',text:'At the end, the axon splits into branches with little knobs. Each knob passes the message to the next cell.',look:v3(d.boutons[0]),mark:v3(d.boutons[2]).add(new THREE.Vector3(0,.5,0))},
+{seg:1,u:.3,title:'The synapse',text:'This is one knob up close, sitting next to a branch of another neuron. They don\'t touch. There is a tiny gap between them called the synapse.',look:v3([d.sx,1.2,0]),mark:v3([d.sx-2.4,2.6,1.2])},
+{seg:1,u:.97,title:'Chemical messengers',text:'When a signal arrives, the little bubbles (vesicles) merge with the edge and release chemical messengers (green). They cross the gap and fit into receptors on the next neuron like keys into locks, which can make that neuron fire too.',mk:'Sending signals and packing these messengers takes a lot of energy, and brain cells get most of it from sugar. With less sugar reaching M\'Kenna\'s brain, there is less fuel for this work. Switch between Normal and M\'Kenna to compare how often signals fire.',look:v3([d.sx,.55,0]),mark:v3([d.sx+1.9,.6,1.6]),hud:true}];
+return T},
+spawn(T,curve,speed,size,onEnd,col){const sp=T.pool.find(p=>!p.visible);if(!sp)return;sp.visible=true;sp.scale.setScalar(size);T.pulses.push({sp,curve,u:0,speed:speed/curve.getLength(),onEnd})},
+fire(T){T.flash=1;T.fired++;const pts=[T.ax[0]].concat(T.nodes,[T.ax[T.ax.length-1]]);T.pulses.push({jump:pts,i:0,t:0,sp:T.pool.find(p=>!p.visible),onEnd:()=>{T.term.forEach(c=>this.spawn(T,c,3,.35,()=>{T.ses++}))}});const last=T.pulses[T.pulses.length-1];if(last.sp){last.sp.visible=true;last.sp.scale.setScalar(.9)}},
+update(T,dt,time,cu,seg){
+const f=U.mk.value,rate=1-.58*f;
+T.relT-=dt;
+if(seg===0){if(Math.random()<dt*7*rate){const c=T.dend[Math.floor(Math.random()*T.dend.length)];this.spawn(T,c,2.2,.3,()=>{T.charge+=1})}
+if(T.charge>=6){T.charge=0;this.fire(T)}}
+T.flash=Math.max(0,T.flash-dt*2.2);T.somaMat.emissive.setRGB(.6*T.flash,.5*T.flash,.15*T.flash);T.somaMat.opacity=.5+.3*T.flash;
+const p=new THREE.Vector3();
+T.pulses=T.pulses.filter(P=>{if(!P.sp)return false;
+if(P.jump){P.t+=dt*rate;const step=.09;if(P.t>step){P.t=0;P.i++;if(P.i>=P.jump.length){P.sp.visible=false;P.onEnd&&P.onEnd();return false}}P.sp.position.copy(P.jump[P.i]);P.sp.scale.setScalar(.6+1.2*(1-P.t/step));return true}
+P.u+=dt*P.speed*rate;if(P.u>=1){P.sp.visible=false;P.onEnd&&P.onEnd();return false}P.curve.getPointAt(P.u,p);P.sp.position.copy(p);return true});
+T.forest.forEach(F=>{F.next-=dt*rate;if(F.next<0){F.next=rnd(2,5);const pts=T.ax.map(v=>v.clone().applyMatrix4(F.g.matrixWorld));const c=new THREE.CatmullRomCurve3(pts);this.spawn(T,c,9,.5)}});
+if(seg===1){if(T.relT<=0){T.relT=(2.2+Math.random())/rate;let k=0;T.vs.forEach((v,i)=>{if(v.st===0&&T.ves[i].y<1.9&&k<4&&Math.random()<.7){v.st=1;v.t=0;k++}})}}
+const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),b0=v3(T.d.b0);
+T.vs.forEach((v,i)=>{const home=T.vesHome[i];let pos=home.clone(),s=1;
+if(v.st===1){v.t+=dt*1.4;const tgt=new THREE.Vector3(home.x,.95,home.z);pos.lerpVectors(home,tgt,sstep(0,1,v.t));if(v.t>=1){v.st=2;v.t=0;for(let k=0;k<14;k++)T.ntd.push({p:tgt.clone().add(new THREE.Vector3(rnd(-.12,.12),-.08,rnd(-.12,.12))),v:new THREE.Vector3(rnd(-.35,.35),-rnd(.5,.9),rnd(-.35,.35)),t:0})}}
+else if(v.st===2){v.t+=dt;pos.set(home.x,.95,home.z);s=Math.max(0,1-v.t*2);if(v.t>2.5){v.st=0;v.t=0}}
+else{pos.y+=.05*Math.sin(time*2+i)}
+sc.setScalar(s);m.compose(pos,q,sc);T.vm.setMatrixAt(i,m)});T.vm.instanceMatrix.needsUpdate=true;
+let n=0;T.ntd=T.ntd.filter(o=>{o.t+=dt;o.p.addScaledVector(o.v,dt);o.v.x*=.97;o.v.z*=.97;if(o.p.y<T.d.rec[0][1]+.12){let hit=-1,bd=.16;T.rec.forEach((r,j)=>{const dd=(r.x-o.p.x)**2+(r.z-o.p.z)**2;if(dd<bd){bd=dd;hit=j}});if(hit>=0)T.rl[hit]=1;o.v.y=Math.abs(o.v.y)*.3;if(o.t>1.2)return false}if(o.t>2.2)return false;if(n<400){sc.setScalar(1);m.compose(o.p,q,sc);T.nt.setMatrixAt(n++,m)}return true});T.nt.count=n;T.nt.instanceMatrix.needsUpdate=true;
+const cA=new THREE.Color(0x6a5acd),cB=new THREE.Color(0x7dffb0),cc=new THREE.Color();
+T.rec.forEach((r,j)=>{T.rl[j]=Math.max(0,T.rl[j]-dt*1.2);sc.setScalar(1);m.compose(r,q,sc);T.rm.setMatrixAt(j,m);cc.copy(cA).lerp(cB,T.rl[j]);T.rm.setColorAt(j,cc)});T.rm.instanceMatrix.needsUpdate=true;T.rm.instanceColor.needsUpdate=true;
+T.rate+=((T.fired)-T.rate)*0;T.rateShown=(T.rateShown||1)+((rate)-(T.rateShown||1))*Math.min(1,dt*2)},
+hud(T){const r=Math.round((T.rateShown||1)*100);return `<b>How often signals fire</b><div class="meter"><div style="width:${r}%;background:linear-gradient(90deg,#ffd166,#fff3a0)"></div></div><div>${r>70?'Normal: lots of signals':"M'Kenna: fewer signals"}</div>`}
+};
+
 async function enterTrip(id){
 const def=TRIPS[id];if(!def)return;
 if(!has(def.lesson))return;if(lab)leaveNow();$('panel').classList.add('hidden');$('modal').classList.add('hidden');
@@ -990,7 +1189,7 @@ setTimeout(()=>$('fade').style.opacity=0,80);
 }
 function exitTrip(silent){
 if(!trip)return;$('fade').style.opacity=1;
-setTimeout(()=>{if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;document.body.classList.remove('intrip');$('tripUI').classList.add('hidden');controls.enabled=true;updateBodyGate();$('fade').style.opacity=0;if(!canBody()&&!silent)openModal()},300)}
+const back=trip.def.back;setTimeout(()=>{if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;document.body.classList.remove('intrip');$('tripUI').classList.add('hidden');controls.enabled=true;if(back==='brain'&&!silent){enterBrain();$('fade').style.opacity=0;return}updateBodyGate();$('fade').style.opacity=0;if(!canBody()&&!silent)openModal()},300)}
 $('exitTrip').onclick=()=>exitTrip();
 $('tripNext').onclick=()=>{const n=trip&&trip.def.next;if(!n||!has(TRIPS[n].lesson))return;const go=n;$('fade').style.opacity=1;setTimeout(()=>{if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;enterTrip(go)},300)};
 function buildMarkers(){const T=trip.T;trip.markers=trip.S.map((s,i)=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:markerTex(i+1),depthTest:false,transparent:true}));sp.position.copy(s.mark);sp.scale.setScalar(.42);sp.renderOrder=10;sp.userData.stop=i;T.scene.add(sp);return sp})}
@@ -1037,7 +1236,7 @@ _m.lookAt(_pos,_tg,tr.up);_q.setFromRotationMatrix(_m);
 _e.set(tr.pitch,tr.yaw,0);const off=new THREE.Quaternion().setFromEuler(_e);
 tripCam.position.copy(_pos);tripCam.quaternion.copy(_q).multiply(off);
 const cu=tr.u;
-tr.markers.forEach((m,i)=>{const st=tr.S[i];m.visible=(st.seg||0)===tr.seg&&i!==tr.stopIdx;m.scale.setScalar(.42*(1+.12*Math.sin(time*4+i)))});
+tr.markers.forEach((m,i)=>{const st=tr.S[i];m.visible=(st.seg||0)===tr.seg&&i!==tr.stopIdx&&(!tr.def.markerRange||m.position.distanceTo(tripCam.position)<tr.def.markerRange);m.scale.setScalar(.42*(1+.12*Math.sin(time*4+i)))});
 tr.def.update.call(tr.def,T,dt,time,cu,tr.seg);
 if(tr.def.hud&&!$('tripHud').classList.contains('hidden')){tr.hudT=(tr.hudT||0)+dt;if(tr.hudT>.25){tr.hudT=0;$('tripHud').innerHTML=tr.def.hud(T)}}
 }
