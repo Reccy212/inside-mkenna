@@ -291,6 +291,7 @@ const LESSONS=[
 {n:16,badge:'🧠',label:'Bonus',q:'The brain',u:'A full 3D brain to explore, plus rides through its fluid-filled spaces and along a neuron',h:'6c2356e7e6138057f6229efa19c34b6fb0faad8dea703e7d1b38cff255eb4b8b',acts:[['brain','Brain explorer'],['trip:brainv','Fly inside'],['trip:neuron','Neurons']]},
 {n:21,badge:'🫁',label:'Staying alive',q:'Gas exchange and circulation',u:'How breathing and the heartbeat keep oxygen moving to every cell, all on their own',h:'04d492669f6293347b354b90ba1a0079733d18dc208d04d603052da841d21bb0',acts:[['proc:breathe','Breathing'],['proc:circ','Heartbeat and blood flow']]},
 {n:22,badge:'🍎',label:'Staying alive',q:'Fuel and waste',u:'How food becomes fuel for your cells, and how your body cleans out what it doesn\'t need',h:'4f2d0e54a6febf3bc356fbd27ab1b6462814d12b344a0c8625565470cb9cf30a',acts:[['proc:digest','Digestion and absorption'],['proc:filter','Filtering and waste']]},
+{n:23,badge:'🛡️',label:'Staying alive',q:'Balance and protection',u:'How your body keeps its temperature steady, fights off germs and repairs itself',h:'e57f43bbea461b9b3f3f94848a3bd844e1d16635937724ab686c9f9a00deb000',acts:[['proc:temp','Body temperature'],['proc:immune','Fighting germs'],['proc:heal','Healing and clotting']]},
 {n:15,q:'What questions on our Driving Question Board can we now answer?',u:'Put the whole story together',h:'322473b732fdf88b5c2b037ce41771269a80b8cd75ebeff8bac6ffc17cf068eb',acts:[['panel:review','The big picture']]}
 ];
 const MASTER='ee85d756d03ff4f683e368a2b9b0b1fa0b94053f09f29f878f66c924f7ecf2bc';
@@ -1192,7 +1193,7 @@ async function enterProc(id){const P=PROCS[id];if(!P||!has(P.group))return;
 if(trip)leaveNow();if(lab)leaveNow();select(null);if(journey)stopJourney();$('panel').classList.add('hidden');$('modal').classList.add('hidden');$('labLabels').innerHTML='';
 try{await bodyP}catch(e){}if(!BODYG.body){toast('Could not load the body. Try refreshing.');return}
 if(P.pre){try{await P.pre()}catch(e){console.error(e);toast('Could not load that part. Try again.');return}}
-const W=procCache[id]||(procCache[id]=P.build());W.id=id;lab=W;renderer.localClippingEnabled=false;
+const W=procCache[id]||(procCache[id]=P.build());W.id=id;lab=W;renderer.localClippingEnabled=!!W.clip;
 document.body.classList.add('intrip');$('bodyUI').classList.add('hidden');$('labUI').classList.remove('hidden');$('tip').style.display='none';
 controls.enabled=false;labControls.enabled=true;labControls.minDistance=1.5;labControls.maxDistance=30;
 if(W.savedCam){labControls.target.copy(W.savedT);labCam.position.copy(W.savedCam)}else{labControls.target.set(...W.target);labCam.position.set(...W.cam)}
@@ -1407,6 +1408,154 @@ const showN=W.view==='neph'&&!W.tw;if(W.L){labPlace(W.L.n,v3(kidJ.gl).add(new TH
 setTxt('wtT',W.water<.25?'Not much':W.water<.7?'Some':'Lots');setBar('flB',W.fill,W.fill>.85?'#ff8a5c':'#ffd166');const cE=$('flC');if(cE)cE.style.background='#'+urineCol.getHexString();
 setTxt('flMsg',W.peeing?'Emptying the bladder.':W.fill>=1?'Your bladder is full. Stretch sensors in its wall are telling your brain it\'s time to go. Press "Use the bathroom".':W.water<.25?'Not enough water: your kidneys hold on to more water, so urine gets darker and there is less of it.':W.water>.7?'Lots of water: your kidneys let extra water go, so urine is pale and the bladder fills faster.':'')};
 return W}};
+let skinGLB=null,skinJ=null;
+async function getSkin(){if(!skinGLB){showLoading('Loading the skin',0);try{[skinGLB,skinJ]=await Promise.all([loadGLB('models/skin.glb',p=>showLoading('Loading the skin',p)),loadJSON('models/skin.json')])}finally{hideLoading()}}return skinGLB}
+function skinPart(n,mat){const o=skinGLB.scene.getObjectByName(n);const m=new THREE.Mesh(o.geometry,mat||new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.5,clearcoat:.3}));m.position.copy(o.position);m.quaternion.copy(o.quaternion);return m}
+
+PROCS.temp={group:23,title:'Body temperature',pre:getSkin,build(){
+const s=labScene(0x0b1024);const nar=innerWidth/innerHeight<1.1;const d=skinJ;const TX=v3(d.tx);
+const W={scene:s,keep:true,cam:nar?[0,-.6,25]:[3.2,1.8,15.5],target:nar?[0,-1.4,0]:[-2.9,1.2,0],out:22,ex:false,fever:false,view:'body',core:37,sw:0,sh:0,flow:.5};
+const bg=new THREE.Group();s.add(bg);W.bg=bg;
+W.ghost=procGhost();bg.add(bodyPart('body',W.ghost));
+['lungs','heart','liver','stomach','smallInt','largeInt','vessels','skeleton'].forEach(id=>{const m=faint(id,.14);if(m)bg.add(m)});
+const smp=sampleSurface(new THREE.Mesh(BODYG.body),500,(p,n)=>n.y>-.3&&p.y>-4.5&&Math.abs(n.z)+Math.abs(n.x)>.5);
+W.drops=new THREE.InstancedMesh(new THREE.SphereGeometry(.03,8,6),new THREE.MeshPhysicalMaterial({color:0x9fdcff,transparent:true,opacity:.85,roughness:.05,clearcoat:1}),smp.length);W.drops.renderOrder=6;bg.add(W.drops);
+W.dd=smp.map(([p,n])=>({p:p.clone().addScaledVector(n,.03),n,t:Math.random()}));
+W.thermo=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),blending:THREE.AdditiveBlending,depthTest:false,transparent:true,color:0xff9a6a}));W.thermo.position.set(0,4.55,.15);W.thermo.scale.setScalar(.6);W.thermo.renderOrder=9;bg.add(W.thermo);
+const sk=new THREE.Group();s.add(sk);
+sk.add(skinPart('skin'));sk.add(skinPart('sweat'));sk.add(skinPart('follicle'));sk.add(skinPart('touchnerve'));
+const caps=skinPart('skincaps',new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.35,clearcoat:.5,emissive:0x000000}));sk.add(caps);W.caps=caps;
+const arr=skinPart('arrector');sk.add(arr);W.arr=arr;
+const hp=new THREE.Group();hp.position.copy(v3(d.hairBase));sk.add(hp);const hair=skinPart('hair');hair.position.set(0,0,0);hp.add(hair);W.hair=hp;
+sk.children[0].material=new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.6,clearcoat:.2,transparent:true,opacity:.42,depthWrite:false,side:THREE.DoubleSide});sk.children[0].renderOrder=3;
+W.duct=lineCurve(d.duct);
+W.sweat=new THREE.InstancedMesh(new THREE.SphereGeometry(.045,8,6),new THREE.MeshPhysicalMaterial({color:0x8fd8ff,transparent:true,opacity:.9,roughness:.05,clearcoat:1,emissive:0x0a3550}),120);W.sweat.renderOrder=6;W.sweat.count=0;s.add(W.sweat);W.sd=[];
+W.heat=new THREE.InstancedMesh(new THREE.SphereGeometry(.07,8,6),new THREE.MeshBasicMaterial({color:0xffa060,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false}),80);W.heat.count=0;s.add(W.heat);W.hd=[];
+W.flowP=new THREE.InstancedMesh(new THREE.SphereGeometry(.035,8,6),new THREE.MeshBasicMaterial({color:0xff3344}),160);W.flowP.count=0;W.flowP.renderOrder=5;s.add(W.flowP);
+W.capC=d.caps.map(lineCurve);W.artC=lineCurve(d.art);W.fd=[];
+W.onEnter=()=>{W.L={th:labLabel('Hypothalamus: the thermostat'),sg:labLabel('Sweat gland'),hr:labLabel('Hair and goosebump muscle'),cp:labLabel('Blood vessels near the surface')}};
+W.tools=[['view','Zoom into the skin',()=>{W.view=W.view==='body'?'skin':'body';if(W.view==='skin')camTo(W,innerWidth/innerHeight>1.1?[TX.x+1.4,TX.y+1.6,TX.z+7.6]:[TX.x+2.2,TX.y+2.6,TX.z+11],innerWidth/innerHeight>1.1?[TX.x-2.5,TX.y-.6,TX.z]:[TX.x,TX.y-2.6,TX.z]);else camTo(W,W.cam,W.target)}],['ex','Exercise',()=>{W.ex=!W.ex}],['fv','Fever',()=>{W.fever=!W.fever}]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{if(b.dataset.t==='view'){b.textContent=W.view==='body'?'Zoom into the skin':'Back to the body';b.classList.toggle('on',W.view==='skin')}if(b.dataset.t==='ex')b.classList.toggle('on',W.ex);if(b.dataset.t==='fv')b.classList.toggle('on',W.fever)})};
+W.card=()=>{let h=`<div class="step">Balance and protection</div><h3>Keeping body temperature steady</h3>`;
+h+=`<div class="ctl"><b>Temperature outside</b><input type="range" id="otR" min="-10" max="42" value="${W.out}"><span id="otT" class="small"></span></div>`;
+h+=`<div class="stage" id="tpStage"></div><div class="bars"><span>Core temperature</span><div id="tpC" class="small"></div><span>Sweating</span><div class="bar"><div id="tpS"></div></div><span>Shivering</span><div class="bar"><div id="tpH"></div></div><span>Blood flow to skin</span><div class="bar"><div id="tpF"></div></div></div>`;
+h+=`<p class="small">⭐ Your inside temperature stays near 37 °C (98.6 °F) all day. A tiny part of the brain called the hypothalamus works like a thermostat: it checks your blood temperature and switches on cooling or heating automatically. Keeping things steady like this is called homeostasis.</p>`;return h};
+W.bind=()=>{const r=$('otR');if(r)r.oninput=()=>{W.out=+r.value}};
+W.update=(dt,time)=>{runTw(W,dt);
+const set=W.fever?38.6:37;const load=(W.out-24)/14+(W.ex?1.3:0);
+let want=load;if(W.fever&&W.core<set-.1)want=Math.min(want,-.9);
+const tSw=clamp(want,0,1),tSh=clamp(-want-.15,0,1);W.sw+=(tSw-W.sw)*Math.min(1,dt*1.5);W.sh+=(tSh-W.sh)*Math.min(1,dt*1.5);W.flow+=((.5+.45*tSw-.4*tSh)-W.flow)*Math.min(1,dt*1.5);
+const tCore=set+.25*clamp(load,-1.5,1.6)-(W.fever?0:0);W.core+=(tCore-W.core)*Math.min(1,dt*.6);
+const hot=clamp((W.core-37)/1.6+W.sw*.4,0,1),cold=clamp(W.sh,0,1);
+W.ghost.uniforms.c.value.setRGB(.56+.44*hot-.1*cold,.7-.25*hot+.08*cold,1-.6*hot);
+W.bg.position.set(Math.sin(time*70)*.012*W.sh,Math.cos(time*83)*.008*W.sh,0);
+W.thermo.material.color.setHSL(.6*(1-hot)*(cold>.1?1:.1)+.02,.9,.6);W.thermo.scale.setScalar(.45+.15*Math.sin(time*4));
+const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+W.dd.forEach((o,i)=>{o.t+=dt*.25;if(o.t>1)o.t=0;const vis=i<W.dd.length*W.sw;p.copy(o.p);p.y-=o.t*.25;sc.setScalar(vis?Math.sin(o.t*Math.PI):0);m.compose(p,q,sc);W.drops.setMatrixAt(i,m)});W.drops.instanceMatrix.needsUpdate=true;
+if(W.view==='skin'||W.tw){if(Math.random()<dt*28*W.sw)W.sd.push({u:0,ph:0});
+let n=0;W.sd=W.sd.filter(o=>{if(o.ph===0){o.u+=dt*.45;if(o.u>=1){o.ph=1;o.t=0;o.b=W.duct.getPointAt(1).clone().add(new THREE.Vector3(rnd(-.5,.5),0,rnd(-.5,.5)))}W.duct.getPointAt(Math.min(1,o.u),p);sc.setScalar(1)}else{o.t+=dt*.5;p.copy(o.b);p.y+=.02+o.t*.6;sc.setScalar(Math.max(0,1.4-o.t*1.2));if(o.t>1.2)return false}if(n<120){m.compose(p,q,sc);W.sweat.setMatrixAt(n++,m)}return true});W.sweat.count=n;W.sweat.instanceMatrix.needsUpdate=true;
+if(Math.random()<dt*20*hot)W.hd.push({p:TX.clone().add(new THREE.Vector3(rnd(-2.6,2.6),.05,rnd(-1.5,1.5))),t:0});
+n=0;W.hd=W.hd.filter(o=>{o.t+=dt*.6;if(o.t>1)return false;p.copy(o.p);p.y+=o.t*1.4;p.x+=Math.sin(o.t*8+o.p.z)*.08;sc.setScalar(1-o.t);if(n<80){m.compose(p,q,sc);W.heat.setMatrixAt(n++,m)}return true});W.heat.count=n;W.heat.instanceMatrix.needsUpdate=true;
+if(Math.random()<dt*50*(.2+W.flow))W.fd.push({c:Math.random()<.35?W.artC:W.capC[Math.floor(Math.random()*W.capC.length)],u:0});
+n=0;W.fd=W.fd.filter(o=>{o.u+=dt*(.3+.6*W.flow);if(o.u>=1)return false;o.c.getPointAt(o.u,p);sc.setScalar(1);if(n<160){m.compose(p,q,sc);W.flowP.setMatrixAt(n++,m)}return true});W.flowP.count=n;W.flowP.instanceMatrix.needsUpdate=true}
+const fl=W.flow;W.caps.material.emissive.setRGB(.5*fl*fl,.02,.04);W.caps.scale.set(1,1,1);
+W.hair.rotation.z=.55-.65*W.sh;W.arr.scale.set(1,1-.25*W.sh,1);
+if(W.L){const sk=W.view==='skin'&&!W.tw;labPlace(W.L.th,new THREE.Vector3(0,5.6,.2),W.view==='body'&&!W.tw);labPlace(W.L.sg,TX.clone().add(new THREE.Vector3(-1.6,-1.95,.6)),sk);labPlace(W.L.hr,v3(skinJ.hairBase).add(new THREE.Vector3(.4,1.5,0)),sk);labPlace(W.L.cp,TX.clone().add(new THREE.Vector3(.3,-.1,1.6)),sk)}
+setTxt('otT',`${Math.round(W.out)} °C${W.out<5?' (freezing)':W.out<16?' (cold)':W.out<28?' (comfortable)':' (hot)'}`);
+setTxt('tpC',`${W.core.toFixed(1)} °C (${(W.core*9/5+32).toFixed(1)} °F)`);setBar('tpS',W.sw,'#7fd3ff');setBar('tpH',W.sh,'#c8b6ff');setBar('tpF',W.flow,'#ff6f61');
+const st=W.fever&&W.core<38.4?'Fever: your immune system told the thermostat to aim higher (38.6 °C). Until you get there, you feel cold and shiver, even in a warm room.':W.sw>.2?'Too warm: sweat glands release sweat onto your skin. As it evaporates it carries heat away. Blood vessels near the surface widen so more heat can escape, which is why you look red.':W.sh>.2?'Too cold: muscles shiver, tiny twitches that make heat. Blood vessels near the surface narrow to keep warm blood deep inside, and goosebump muscles pull your hairs up.':'Just right: no sweating or shivering needed. Small changes in blood flow to the skin keep you at about 37 °C.';
+setTxt('tpStage',st)};
+return W}};
+
+function lumpyGeo(r,detail,amp,seed){const g=new THREE.IcosahedronGeometry(r,detail);const p=g.attributes.position;const v=new THREE.Vector3();for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);const n=Math.sin(v.x*7+seed)*Math.sin(v.y*6+seed*2)*Math.sin(v.z*8+seed*3);v.multiplyScalar(1+amp*n);p.setXYZ(i,v.x,v.y,v.z)}g.computeVertexNormals();return g}
+PROCS.immune={group:23,title:'Fighting germs',build(){
+const s=labScene(0x120c1c);const nar=innerWidth/innerHeight<1.1;const W={scene:s,keep:true,cam:nar?[0,3,22]:[-2,2.6,15],target:nar?[0,-1.2,0]:[-3.6,-.2,0],fever:false,vac:false,germs:[],wbc:[],abs:[],day:0,infl:0,eaten:0};
+const vy=2.2;W.vy=vy;
+const vessel=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,22,40,1,true),new THREE.MeshPhysicalMaterial({color:0xd04050,transparent:true,opacity:.22,roughness:.2,clearcoat:.8,side:THREE.DoubleSide,depthWrite:false}));vessel.rotation.z=Math.PI/2;vessel.position.y=vy;vessel.renderOrder=3;s.add(vessel);W.vessel=vessel;
+const tg=lumpyGeo(.75,2,.08,1);tg.scale(1,.55,1);const tm=new THREE.MeshStandardMaterial({color:0xf0a8a8,roughness:.6});const tissue=new THREE.InstancedMesh(tg,tm,90);let k=0;const mm=new THREE.Matrix4(),qq=new THREE.Quaternion(),sc=new THREE.Vector3();
+for(let ix=0;ix<10;ix++)for(let iz=0;iz<9;iz++){const x=-10+ix*2.2+rnd(-.3,.3),z=-6+iz*1.6+rnd(-.3,.3);qq.setFromEuler(new THREE.Euler(0,rnd(0,6),0));sc.set(rnd(.9,1.3),1,rnd(.9,1.3));mm.compose(new THREE.Vector3(x,-1.4,z),qq,sc);tissue.setMatrixAt(k++,mm)}s.add(tissue);W.tm=tm;
+const cut=new THREE.Mesh(new THREE.TorusGeometry(.7,.12,8,24),new THREE.MeshStandardMaterial({color:0x7a1020,roughness:.7}));cut.rotation.x=Math.PI/2;cut.position.set(4,-.85,1.5);s.add(cut);
+W.rbc=new THREE.InstancedMesh(rbcGeo(.32),new THREE.MeshStandardMaterial({color:0xc0101c,roughness:.5}),60);s.add(W.rbc);W.rd=[];for(let i=0;i<60;i++)W.rd.push({x:rnd(-11,11),y:rnd(-.8,.8),z:rnd(-.8,.8),r:rnd(0,6),sp:rnd(.8,1.2)});
+const bGeo=new THREE.CylinderGeometry(.13,.13,.42,10);bGeo.rotateZ(Math.PI/2);const endG=new THREE.SphereGeometry(.13,10,8);
+const bm=new THREE.MeshStandardMaterial({color:0x6ad84a,roughness:.5,emissive:0x0a2a00});W.gerM=new THREE.InstancedMesh(bGeo,bm,180);W.gerM.count=0;s.add(W.gerM);
+W.wbcGeo=lumpyGeo(.55,3,.09,2);W.wbcMat=new THREE.MeshPhysicalMaterial({color:0xf4f2ff,roughness:.35,clearcoat:.6,transparent:true,opacity:.85});W.nucGeo=lumpyGeo(.22,1,.25,4);W.nucMat=new THREE.MeshStandardMaterial({color:0x7a4ad0,roughness:.5});
+W.macGeo=lumpyGeo(.95,3,.16,7);W.macMat=new THREE.MeshPhysicalMaterial({color:0xffe2a8,roughness:.4,clearcoat:.4,transparent:true,opacity:.85});
+W.abM=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xffe066}));s.add(W.abM);
+W.mac=[];W.addMac=pos=>{const mesh=new THREE.Mesh(W.macGeo,W.macMat);mesh.position.copy(pos);mesh.renderOrder=4;s.add(mesh);W.mac.push({m:mesh,eat:[]})};
+for(let i=0;i<3;i++)W.addMac(new THREE.Vector3(-6+i*5,-.5,rnd(-2,2)));
+W.reset=()=>{W.germs=[];W.wbc.forEach(w=>s.remove(w.g));W.wbc=[];W.abs=[];W.day=0;W.infl=0;W.eaten=0;W.mac.forEach(mc=>mc.eat=[])};
+W.tools=[['add','Add germs (scrape)',()=>{for(let i=0;i<10;i++)W.germs.push({p:new THREE.Vector3(4+rnd(-.5,.5),-.6+rnd(0,.5),1.5+rnd(-.5,.5)),v:new THREE.Vector3(rnd(-1,1),rnd(-.2,.4),rnd(-1,1)).multiplyScalar(.4),split:rnd(3,6),eaten:0,stuck:0,rot:rnd(0,6)})}],['fv','Fever',()=>{W.fever=!W.fever}],['vac','Vaccinated',()=>{W.vac=!W.vac}],['rs','Reset',()=>W.reset()]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{if(b.dataset.t==='fv')b.classList.toggle('on',W.fever);if(b.dataset.t==='vac')b.classList.toggle('on',W.vac)})};
+W.card=()=>{let h=`<div class="step">Balance and protection</div><h3>Immune defense</h3><div class="stage" id="imStage"></div>`;
+h+=`<div class="bars"><span>Days since the scrape</span><div id="imD" class="small"></div><span>Germs</span><div class="bar"><div id="imG"></div></div><span>White blood cells</span><div class="bar"><div id="imW"></div></div><span>Inflammation</span><div class="bar"><div id="imI"></div></div></div>`;
+h+=`<div class="legend"><span><i style="background:#6ad84a"></i>Bacteria (germs)</span><span><i style="background:#f4f2ff"></i>White blood cell</span><span><i style="background:#ffe2a8"></i>Big eater cell (macrophage)</span><span><i style="background:#ffe066"></i>Antibodies</span><span><i style="background:#c0101c"></i>Red blood cell</span></div>`;
+h+=`<p class="small">⭐ Your skin is your first wall against germs. When germs get past it, the area gets red, warm and swollen. That is inflammation: blood vessels widen and leak so white blood cells can rush in. A fever slows many germs down and speeds up your defenders.</p>`;return h};
+W.update=(dt,time)=>{runTw(W,dt);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();
+const G=W.germs;if(G.length)W.day+=dt*.25;W.infl+=((G.length?Math.min(1,.3+G.length/40):0)-W.infl)*Math.min(1,dt*.6);
+W.vessel.scale.set(1,1+.25*W.infl,1+.25*W.infl);W.tm.color.setRGB(.94,.66-.3*W.infl,.66-.3*W.infl);
+W.rd.forEach((o,i)=>{o.x+=dt*2.4*o.sp*(1-.4*W.infl);if(o.x>11)o.x=-11;o.r+=dt;p.set(o.x,W.vy+o.y,o.z);q.setFromEuler(new THREE.Euler(o.r,0,Math.PI/2));m.compose(p,q,sc);W.rbc.setMatrixAt(i,m)});W.rbc.instanceMatrix.needsUpdate=true;
+const grow=(W.fever?.45:1);
+G.forEach(g=>{if(g.eaten)return;g.split-=dt*grow;if(g.split<=0&&G.length<170){g.split=rnd(4,7);G.push({p:g.p.clone().add(new THREE.Vector3(rnd(-.3,.3),0,rnd(-.3,.3))),v:g.v.clone().multiplyScalar(-1),split:rnd(4,7),eaten:0,stuck:0,rot:rnd(0,6)})}
+g.v.add(new THREE.Vector3(rnd(-1,1),rnd(-.5,.5),rnd(-1,1)).multiplyScalar(dt*.6));g.v.multiplyScalar(g.stuck?.9:.995);g.p.addScaledVector(g.v,dt*(g.stuck?.2:1));g.p.y=clamp(g.p.y,-.7,.6);g.p.x=clamp(g.p.x,-9,9);g.p.z=clamp(g.p.z,-5,5);g.rot+=dt*(g.stuck?.2:1.5)});
+const wantW=G.length?Math.min(14,3+Math.ceil(G.length/6)+(W.vac?4:0)):0;
+if(W.wbc.length<wantW&&Math.random()<dt*(W.vac?3:1.2)*(W.fever?1.6:1)){const g=new THREE.Group();const b=new THREE.Mesh(W.wbcGeo,W.wbcMat);b.renderOrder=4;g.add(b);for(let i=0;i<3;i++){const nn=new THREE.Mesh(W.nucGeo,W.nucMat);nn.position.set(rnd(-.15,.15),rnd(-.1,.1),rnd(-.15,.15));g.add(nn)}g.position.set(-11,W.vy+rnd(-.4,.4),rnd(-.5,.5));s.add(g);W.wbc.push({g,ph:'roll',x0:rnd(-2,7),t:0,eat:[]})}
+const spd=(W.fever?1.5:1)*(W.vac?1.4:1);
+W.wbc.forEach(w=>{const P=w.g.position;
+if(w.ph==='roll'){P.x+=dt*2*spd;P.y+=(W.vy-1.0-P.y)*dt*.8;w.g.rotation.z-=dt*2;if(P.x>=w.x0)w.ph='squeeze'}
+else if(w.ph==='squeeze'){P.y-=dt*.9*spd;w.g.scale.set(1+.35*Math.sin(Math.min(1,(W.vy-1.2-P.y))*Math.PI),1-.3*Math.sin(Math.min(1,(W.vy-1.2-P.y))*Math.PI),1);if(P.y<=-.1){w.ph='hunt';w.g.scale.setScalar(1)}}
+else{let best=null,bd=1e9;G.forEach(g=>{if(g.eaten)return;const dd=g.p.distanceToSquared(P);if(dd<bd){bd=dd;best=g}});
+if(best){const dir=best.p.clone().sub(P);const L=dir.length();if(L>.45)P.addScaledVector(dir.normalize(),dt*1.4*spd*(best.stuck?1.4:1));else{best.eaten=1;w.eat.push({g:best,t:0});W.eaten++}}
+else{P.x+=Math.sin(time+P.z)*dt*.3}P.y=clamp(P.y,-.3,.5);w.g.rotation.y+=dt}
+w.eat=w.eat.filter(e=>{e.t+=dt*.8;e.g.p.lerp(P,Math.min(1,dt*6));return e.t<1})});
+W.mac.forEach(mc=>{const P=mc.m.position;let best=null,bd=6;G.forEach(g=>{if(g.eaten)return;const dd=g.p.distanceToSquared(P);if(dd<bd){bd=dd;best=g}});if(best){const dir=best.p.clone().sub(P);if(dir.length()>.8)P.addScaledVector(dir.normalize(),dt*.45);else{best.eaten=1;mc.eat.push({g:best,t:0});W.eaten++}}mc.m.rotation.y+=dt*.2;mc.eat=mc.eat.filter(e=>{e.t+=dt*.6;e.g.p.lerp(P,Math.min(1,dt*4));return e.t<1})});
+for(let i=G.length-1;i>=0;i--){const g=G[i];if(g.eaten){g.eaten+=dt;if(g.eaten>2)G.splice(i,1)}}
+const abOn=W.vac?G.length>0:W.day>3&&G.length>0;
+if(abOn&&W.abs.length<160&&Math.random()<dt*30){W.abs.push({p:new THREE.Vector3(rnd(-8,8),rnd(-.5,.6),rnd(-4,4)),v:new THREE.Vector3(rnd(-1,1),rnd(-.3,.3),rnd(-1,1)).multiplyScalar(.6),g:null,rot:rnd(0,6)})}
+if(!G.length)W.abs=W.abs.filter(()=>Math.random()>dt*.5);
+const segs=[];const tmp=new THREE.Vector3();
+W.abs.forEach(a=>{if(a.g&&(a.g.eaten||G.indexOf(a.g)<0))a.g=null;if(!a.g){let best=null,bd=1.2;G.forEach(g=>{if(g.eaten)return;const dd=g.p.distanceToSquared(a.p);if(dd<bd){bd=dd;best=g}});if(best){a.g=best;best.stuck=1}a.p.addScaledVector(a.v,dt)}else{a.p.lerp(a.g.p.clone().add(new THREE.Vector3(Math.cos(a.rot)*.18,.15,Math.sin(a.rot)*.18)),Math.min(1,dt*5))}
+const c=a.p,r=a.rot+time*.5;const L=.18;const ux=Math.cos(r),uz=Math.sin(r);segs.push(c.x,c.y-L,c.z,c.x,c.y,c.z,c.x,c.y,c.z,c.x-L*.7*ux,c.y+L*.7,c.z-L*.7*uz,c.x,c.y,c.z,c.x+L*.7*ux,c.y+L*.7,c.z+L*.7*uz)});
+W.abM.geometry.setAttribute('position',new THREE.Float32BufferAttribute(segs,3));
+let n=0;G.forEach(g=>{const s2=g.eaten?Math.max(0,1-g.eaten*.6):1;q.setFromEuler(new THREE.Euler(0,g.rot,0));sc.setScalar(s2);m.compose(g.p,q,sc);if(n<180)W.gerM.setMatrixAt(n++,m)});W.gerM.count=n;W.gerM.instanceMatrix.needsUpdate=true;
+setTxt('imD',G.length||W.day?W.day.toFixed(1):'0');setBar('imG',G.length/120,'#6ad84a');setBar('imW',(W.wbc.length+W.mac.length)/18,'#f4f2ff');setBar('imI',W.infl,'#ff6f61');
+const st=!G.length&&!W.eaten?'Healthy tissue under the skin. Press "Add germs" to scrape the skin and let bacteria in.':!G.length?'All the germs are gone. The inflammation fades and the tissue goes back to normal. Your body also keeps "memory cells" so it can fight these germs faster next time.':W.wbc.length<2?'Bacteria got in and start multiplying. Big eater cells (macrophages) already living in the tissue start eating them and send out alarm signals.':abOn?'Antibodies (yellow Y shapes) stick to the germs like tags, slowing them down and making them easier to eat.'+(W.vac?' Because you were vaccinated, your body already knew how to make these, so they arrive right away.':' They take a few days to make the first time your body meets a germ.'):'Alarm signals make the blood vessel widen and leak (redness and swelling). White blood cells roll along the wall, squeeze out through it, and chase down germs to swallow them.';
+setTxt('imStage',st)};
+return W}};
+
+PROCS.heal={group:23,title:'Healing and clotting',pre:getSkin,build(){
+const s=labScene(0x0b1024);const d=skinJ;const HX=v3(d.hx);const nar=innerWidth/innerHeight<1.1;
+const W={scene:s,keep:true,cam:nar?[HX.x+1.2,HX.y+1.6,HX.z+9.4]:[HX.x+.9,HX.y+1.1,HX.z+5.4],target:nar?[HX.x,HX.y-1.9,HX.z]:[HX.x-1.7,HX.y-.55,HX.z],t:0,play:false,slice:true};
+W.clip=new THREE.Plane(new THREE.Vector3(0,0,-1),HX.z+.18);
+const sk=skinPart('skincut',new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:.55,clearcoat:.2,side:THREE.DoubleSide}));s.add(sk);s.add(skinPart('cutvessel'));
+const ends=[HX.clone().add(new THREE.Vector3(.12,-.72,0)),HX.clone().add(new THREE.Vector3(-.12,-.72,0))];W.ends=ends;
+W.rbc=new THREE.InstancedMesh(rbcGeo(.07),new THREE.MeshStandardMaterial({color:0xb0101c,roughness:.5}),260);W.rbc.renderOrder=4;s.add(W.rbc);W.rd=[];
+for(let i=0;i<260;i++)W.rd.push({p:ends[i%2].clone(),v:new THREE.Vector3(),t:Math.random()*3,rest:HX.clone().add(new THREE.Vector3(rnd(-.26,.26),rnd(-.88,-.05),rnd(-1.15,1.15))),r:rnd(0,6),out:false});
+W.plt=new THREE.InstancedMesh(new THREE.OctahedronGeometry(.04,0),new THREE.MeshStandardMaterial({color:0xffd27a,roughness:.4,emissive:0x302000}),90);W.plt.renderOrder=4;s.add(W.plt);W.pd=[];for(let i=0;i<90;i++){const e=ends[i%2];W.pd.push({home:e.clone().add(new THREE.Vector3((i%2?-1:1)*rnd(-.02,.1),rnd(-.1,.12),rnd(-.12,.12))),start:e.clone().add(new THREE.Vector3((i%2?-1:1)*rnd(.4,1.6),rnd(-.25,-.1),rnd(-.1,.1)))})}
+const fs=[];for(let i=0;i<160;i++){const a=HX.clone().add(new THREE.Vector3(rnd(-.3,.3),rnd(-.85,-.05),rnd(-1.1,1.1))),b=a.clone().add(new THREE.Vector3(rnd(-.35,.35),rnd(-.25,.25),rnd(-.4,.4)));fs.push(a,b)}
+W.fibG=new THREE.BufferGeometry().setFromPoints(fs);W.fib=new THREE.LineSegments(W.fibG,new THREE.LineBasicMaterial({color:0xfff3d0,transparent:true,opacity:0}));W.fib.renderOrder=5;s.add(W.fib);
+const scG=lumpyGeo(1,4,.12,3);scG.scale(.4,.14,1.3);W.scab=new THREE.Mesh(scG,new THREE.MeshStandardMaterial({color:LC('#4a140c'),roughness:.95,transparent:true,opacity:0}));W.scab.position.copy(HX).add(new THREE.Vector3(0,.0,0));W.scab.renderOrder=6;s.add(W.scab);
+const depth=(x,z)=>.9*Math.exp(-Math.pow(x/.34,4))*(1-sstep(1.1,1.55,Math.abs(z)));const nc=[];for(let i=0;i<4000&&nc.length<1100;i++){const x=rnd(-.36,.36),z=rnd(-1.5,1.5),y=-rnd(0,1)*depth(x,z);if(depth(x,z)<.08)continue;const dp=depth(x,z);nc.push({p:HX.clone().add(new THREE.Vector3(x,Math.min(y,-.07)+.01,z)),o:clamp((dp+y)/dp*.8+Math.abs(x)/.36*.2+rnd(-.05,.05),0,1),top:y>-.16})}nc.sort((a,b)=>a.o-b.o);W.nc=nc;
+W.newT=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.075,1),new THREE.MeshStandardMaterial({roughness:.6}),nc.length);nc.forEach((c,i)=>W.newT.setColorAt(i,LC(c.top?'#e8c4ae':'#f0a0a8')));W.newT.renderOrder=4;s.add(W.newT);
+const br=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.28,14),new THREE.MeshStandardMaterial({color:LC('#e0303f'),roughness:.4}));br.rotation.z=Math.PI/2;br.position.copy(HX).add(new THREE.Vector3(0,-.72,0));br.scale.y=.001;s.add(br);W.bridge=br;
+const STG=[[0,'0 seconds','The cut','A sharp edge slices through the skin and a small blood vessel. Blood starts flowing out.'],[12,'5 seconds','The vessel squeezes','Muscles in the blood vessel wall tighten, making it narrower so less blood escapes.'],[28,'1 minute','Platelet plug','Platelets, tiny pieces of cells in your blood (the gold bits), stick to the broken edges and to each other, plugging the hole.'],[45,'5 to 10 minutes','A clot forms','Proteins in the blood turn into long sticky threads called fibrin. They make a net that traps red blood cells and turns the liquid blood into a solid clot.'],[62,'A few hours','The scab','The top of the clot dries out into a hard scab that protects the wound while it heals. Don\'t pick it!'],[78,'About 1 week','Rebuilding','Underneath the scab, new skin cells and tiny blood vessels grow in from the edges and fill the gap. The body rebuilds muscle and even bone in a similar way.'],[96,'About 2 weeks','Healed','The new skin is complete and the scab falls off. Deep cuts can leave a lighter scar where the new tissue is a little different.']];
+W.STG=STG;
+W.applyClip=()=>{const pl=W.slice?[W.clip]:[];s.traverse(o=>{if(o.material){o.material.clippingPlanes=pl;o.material.needsUpdate=true}})};W.applyClip();
+W.tools=[['play','▶ Play',()=>{W.play=!W.play;if(W.play&&W.t>=100)W.t=0}],['sl','Slice open',()=>{W.slice=!W.slice;W.applyClip()}],['rs','Start over',()=>{W.t=0;W.play=false}]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{if(b.dataset.t==='play')b.textContent=W.play?'⏸ Pause':'▶ Play';if(b.dataset.t==='sl')b.classList.toggle('on',W.slice)})};
+W.card=()=>`<div class="step">Balance and protection</div><h3>Healing a cut</h3><div class="ctl"><b>Time after the cut</b><input type="range" id="hlR" min="0" max="100" value="${Math.round(W.t)}"><span id="hlT" class="small"></span></div><div class="stage" id="hlStage"></div><p class="small">⭐ Clotting happens in just minutes, but full healing takes weeks. People with certain conditions can't make clots well, so even small cuts bleed for a long time.</p>`;
+W.bind=()=>{const r=$('hlR');if(r)r.oninput=()=>{W.t=+r.value;W.play=false;W.sync()}};
+W.update=(dt,time)=>{runTw(W,dt);if(W.play){W.t=Math.min(100,W.t+dt*4);if(W.t>=100){W.play=false;W.sync()}const r=$('hlR');if(r)r.value=W.t}
+const t=W.t;const bleed=1-sstep(8,45,t);const plt=sstep(16,32,t);const fib=sstep(36,52,t);const scab=sstep(54,66,t)*(1-sstep(92,99,t));const grow=sstep(66,94,t);
+const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+W.rd.forEach((o,i)=>{const show=i<W.rd.length*(.25+.75*Math.min(1,t/10+ .3))*(1-grow);if(t<45){o.t+=dt*(.4+1.2*bleed);if(o.t>3){o.t=0}const k=sstep(0,1,Math.min(1,o.t/2.2));p.lerpVectors(W.ends[i%2],o.rest,k);if(o.t>2.2&&bleed>.3){p.y+=.02*Math.sin(time*3+i)}}else{p.copy(o.rest)}
+if(t<5&&o.t>1.5)p.y=Math.min(p.y,W.ends[0].y-.05);
+o.r+=dt*(fib>.5?0:1);q.setFromEuler(new THREE.Euler(o.r,o.r*.6,0));sc.setScalar(show?1:0);m.compose(p,q,sc);W.rbc.setMatrixAt(i,m)});W.rbc.instanceMatrix.needsUpdate=true;
+W.pd.forEach((o,i)=>{p.lerpVectors(o.start,o.home,plt);q.setFromEuler(new THREE.Euler(time*(1-plt),i,0));sc.setScalar(plt>0||t>14?(1+plt*.8)*(1-grow):0);m.compose(p,q,sc);W.plt.setMatrixAt(i,m)});W.plt.instanceMatrix.needsUpdate=true;
+W.fib.material.opacity=fib*.85*(1-grow);W.scab.material.opacity=scab;W.scab.scale.set(1,1+.3*scab,1);W.scab.material.color.copy(LC('#7a2418')).lerp(LC('#3a0f08'),scab);W.scab.position.y=HX.y-.02+.04*scab-.08*grow;
+W.nc.forEach((c,i)=>{const k=clamp((grow*1.08-c.o)*12,0,1);sc.setScalar(k);q.identity();m.compose(c.p,q,sc);W.newT.setMatrixAt(i,m)});W.newT.instanceMatrix.needsUpdate=true;W.bridge.scale.y=.001+sstep(.15,.6,grow);
+let si=0;for(let i=0;i<W.STG.length;i++)if(t>=W.STG[i][0])si=i;const S=W.STG[si];setTxt('hlT',S[1]);const el=$('hlStage');if(el&&el.dataset.i!==String(si)){el.dataset.i=si;el.innerHTML=`<b>${S[2]}.</b> ${S[3]}`}};
+return W}};
+
 TRIPS.stomachP=Object.assign({},TRIPS.stomach,{lesson:22,alias:'stomach',back:'proc:digest'});
 TRIPS.siP=Object.assign({},TRIPS.si,{lesson:22,alias:'si',back:'proc:digest'});
 TRIPS.liP=Object.assign({},TRIPS.li,{lesson:22,alias:'li',back:'proc:filter'});
