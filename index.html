@@ -91,6 +91,7 @@ body.intrip #menu{display:none!important}
 #labCard .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 #labCard .tags span{font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;background:rgba(255,111,97,.14);border:1px solid rgba(255,111,97,.4)}
 #labCard .tags.tx span{background:rgba(95,224,138,.13);border-color:rgba(95,224,138,.45)}
+#labCard .foods button.wrong{opacity:.35;text-decoration:line-through}
 #labCard .btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 #labCard .rt{display:flex;align-items:center;justify-content:center;text-align:center;min-height:70px;padding:10px;border-radius:14px;margin:4px 0 8px;font-weight:800;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:rgba(127,211,255,.12);border:1px solid rgba(127,211,255,.35)}
 #labCard .rt.wait{background:#7a1f2b;border-color:#c04050}
@@ -302,7 +303,7 @@ const LESSONS=[
 {n:22,badge:'🍎',label:'Staying alive',q:'Fuel and waste',u:'How food becomes fuel for your cells, and how your body cleans out what it doesn\'t need',h:'4f2d0e54a6febf3bc356fbd27ab1b6462814d12b344a0c8625565470cb9cf30a',acts:[['proc:digest','Digestion and absorption'],['proc:filter','Filtering and waste']]},
 {n:23,badge:'🛡️',label:'Staying alive',q:'Balance and protection',u:'How your body keeps its temperature steady, fights off germs and repairs itself',h:'e57f43bbea461b9b3f3f94848a3bd844e1d16635937724ab686c9f9a00deb000',acts:[['proc:temp','Body temperature'],['proc:immune','Fighting germs'],['proc:heal','Healing and clotting']]},
 {n:24,badge:'⚡',label:'Staying alive',q:'Control, senses and movement',u:'How your nerves sense the world and react, how muscles move your bones, and how hormones send messages',h:'e4dbebf320678e4f50d63d59fe9fd5892ea813965bb93ad9c816b06e0c810617',acts:[['proc:senses','Senses and reflexes'],['proc:move','Muscles and movement'],['proc:horm','Hormones and growth']]},
-{n:30,badge:'🩺',label:'Teacher only',q:'Other bodies',u:'Compare M\'Kenna\'s body with other diseases (cancers, diabetes, asthma, heart disease, lactose intolerance) and see how each is treated',h:'',acts:[['proc:dz','Explore other bodies']]},
+{n:30,badge:'🩺',label:'Teacher only',q:'Other bodies',u:'Compare M\'Kenna\'s body with other diseases (cancers, diabetes, asthma, heart disease, lactose intolerance) and see how each is treated',h:'',acts:[['proc:dz','Explore other bodies'],['proc:mystery','🕵️ Mystery patient']]},
 {n:15,q:'What questions on our Driving Question Board can we now answer?',u:'Put the whole story together',h:'322473b732fdf88b5c2b037ce41771269a80b8cd75ebeff8bac6ffc17cf068eb',acts:[['panel:review','The big picture']]}
 ];
 const MASTER='ee85d756d03ff4f683e368a2b9b0b1fa0b94053f09f29f878f66c924f7ecf2bc';
@@ -1924,14 +1925,42 @@ if(W.inside){h+=(S.extra||'')+`<div class="bars">${S.bars.map(([id,l])=>`<span>$
 h+=`<p class="small">🔗 <b>Compared with M'Kenna:</b> ${D.cmp}</p>`;return h};
 W.bind=()=>{$('labCard').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{W.pick(b.dataset.k);renderLabCard()})};
 W.update=(dt,time)=>{runTw(W,dt);const D=DZ[W.dz],sick=W.state==='sick',tx=W.state==='treated';const pulse=.6+.4*Math.sin(time*4);bodyG.visible=!W.inside||!!W.tw;
-Object.keys(W.org).forEach(id=>{const m=W.org[id],hi=D.organs.includes(id);const op=hi?.92:(id==='skeleton'?.22:.14);m.material.opacity+=(op-m.material.opacity)*Math.min(1,dt*4);m.material.depthWrite=hi;if(hi){if(sick)m.material.emissive.setRGB(.45*pulse,.06*pulse,.03*pulse);else if(tx)m.material.emissive.setRGB(.03,.3*pulse,.12*pulse);else m.material.emissive.setRGB(0,.12,.18)}else m.material.emissive.setRGB(0,0,0)});
+Object.keys(W.org).forEach(id=>{const m=W.org[id],hi=!W.hideHi&&D.organs.includes(id);const op=hi?.92:(id==='skeleton'?.22:.14);m.material.opacity+=(op-m.material.opacity)*Math.min(1,dt*4);m.material.depthWrite=hi;if(hi){if(sick)m.material.emissive.setRGB(.45*pulse,.06*pulse,.03*pulse);else if(tx)m.material.emissive.setRGB(.03,.3*pulse,.12*pulse);else m.material.emissive.setRGB(0,.12,.18)}else m.material.emissive.setRGB(0,0,0)});
 if(W.org.vessels)W.org.vessels.material.color.setRGB(1,sick&&W.dz==='leuk'?.85:1,sick&&W.dz==='leuk'?.9:1);
 W.ghost.uniforms.uMk.value+=(((sick&&W.dz==='celiac')?1:0)-W.ghost.uniforms.uMk.value)*Math.min(1,dt*2);
-W.ctum.visible=sick&&W.dz==='colon';W.ltum.visible=sick&&W.dz==='lung';W.tar.visible=(sick||tx)&&W.dz==='lung';W.gas.visible=sick&&W.dz==='lactose';W.sug.visible=sick&&W.dz==='t1d';W.blasts.visible=sick&&W.dz==='leuk';W.hpatch.visible=(sick||tx)&&W.dz==='heart';W.hpatch.scale.setScalar(tx?.45:.7);
+W.ctum.visible=sick&&W.dz==='colon';W.ltum.visible=sick&&W.dz==='lung';W.tar.visible=(sick||tx)&&W.dz==='lung';W.gas.visible=sick&&W.dz==='lactose';W.sug.visible=sick&&W.dz==='t1d';W.blasts.visible=sick&&W.dz==='leuk';W.hpatch.visible=(sick||tx)&&W.dz==='heart';W.hpatch.scale.setScalar(tx?.45:.7);if(W.hideHi){W.ctum.visible=W.ltum.visible=W.tar.visible=W.gas.visible=W.sug.visible=W.blasts.visible=W.hpatch.visible=false}
 if(W.gas.visible){const mm=new THREE.Matrix4();W.gas.userData.pts.forEach((p,i)=>{const s2=.6+.4*Math.sin(time*3+i);mm.makeScale(s2,s2,s2).setPosition(p);W.gas.setMatrixAt(i,mm)});W.gas.instanceMatrix.needsUpdate=true}
 if(W.org.lungs&&W.dz==='asthma'){const br=sick?1+.015*Math.sin(time*9):1+.035*Math.sin(time*2.2);W.org.lungs.scale.set(br,1,br)}else if(W.org.lungs)W.org.lungs.scale.set(1,1,1);
 Object.values(W.CI).forEach(S=>{S.g.visible=W.inside&&S===W.curCI()||(!!W.tw&&S===W.curCI())});if(W.inside||W.tw){const S=W.curCI();S.update(dt,time,sick,tx)}
-const oc=ctr(D.organs[0]);if(W.Lb){W.Lb.textContent=D.lab;labPlace(W.Lb,oc.clone().add(new THREE.Vector3(1.6,.3,.4)),!W.inside&&!W.tw)}if(W.Lci)W.Lci.forEach(l=>labPlace(l.el,l.p,W.inside&&!W.tw&&(!l.os||(l.os===1&&sick)||(l.os===2&&tx))))};
+const oc=ctr(D.organs[0]);if(W.Lb){W.Lb.textContent=D.lab;labPlace(W.Lb,oc.clone().add(new THREE.Vector3(1.6,.3,.4)),!W.inside&&!W.tw&&!W.hideHi)}if(W.Lci)W.Lci.forEach(l=>labPlace(l.el,l.p,W.inside&&!W.tw&&(!l.os||(l.os===1&&sick)||(l.os===2&&tx))))};
+return W}};
+
+const PAT={lactose:{who:'Sam, age 16',story:'Every time Sam has a milkshake, pizza or ice cream, their stomach cramps up and they feel bloated and gassy about an hour later. Other meals are fine. Sam is growing normally and has plenty of energy.'},
+colon:{who:'Robert, age 58',story:'For the past few months Robert has felt more tired than usual and has noticed his bathroom habits changing. He has lost weight without trying. He has never had a screening test.'},
+lung:{who:'Linda, age 64',story:'Linda has smoked a pack of cigarettes a day since she was a teenager. She has had a cough for months that won\'t go away, and lately she gets out of breath just climbing the stairs.'},
+leuk:{who:'Maya, age 9',story:'Maya has been pale and tired for weeks. She keeps catching colds and fevers, and her parents keep finding bruises on her legs that she can\'t remember getting.'},
+t1d:{who:'Leo, age 12',story:'Leo is always thirsty and keeps getting up at night to pee. He eats a lot but has been losing weight, and he feels wiped out at soccer practice.'},
+asthma:{who:'Ava, age 13',story:'In gym class on cold days, or when there is a lot of pollen, Ava starts coughing and wheezing and feels like she can\'t get enough air. It slowly gets better after she rests.'},
+heart:{who:'Frank, age 61',story:'Frank was shoveling snow when he felt a heavy pressure in his chest that spread down his left arm. He is sweating and feels dizzy. He has high cholesterol and doesn\'t exercise much.'}};
+PROCS.mystery={group:30,title:'Mystery patient',build(){const W=PROCS.dz.build();const POOL=Object.keys(PAT);
+Object.assign(W,{cs:0,clue:1,solved:false,wrong:[],score:0,solvedN:0,last:null,hideHi:true,state:'sick'});
+W.pickCase=()=>{let k;do{k=POOL[Math.floor(Math.random()*POOL.length)]}while(k===W.last&&POOL.length>1);W.last=k;W.cs++;W.clue=1;W.solved=false;W.wrong=[];W.state='sick';W.hideHi=true;return k};
+W.dz=W.pickCase();
+const baseEnter=W.onEnter;W.onEnter=()=>{baseEnter();W.pick(W.dz)};
+W.newCase=()=>{const k=W.pickCase();if(W.inside){W.inside=false;W.go()}W.pick(k)};
+W.nextClue=()=>{if(W.clue<4&&!W.solved){W.clue++;if(W.clue>=3)W.hideHi=false;if(W.clue===4&&!W.inside){W.inside=true;W.go()}}};
+W.tools=[['new','🎲 New patient',()=>W.newCase()],['clue','🔎 Next clue',()=>W.nextClue()],['in','🔍 Go inside',()=>{W.inside=!W.inside;W.go()}],['tx','💊 Show treatment',()=>W.setState(W.state==='treated'?'sick':'treated')]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{const t=b.dataset.t;if(t==='clue')b.style.display=W.clue<4&&!W.solved?'':'none';if(t==='in'){b.style.display=W.clue>=4||W.solved?'':'none';b.textContent=W.inside?'⬅ Back to the body':'🔍 Go inside'}if(t==='tx'){b.style.display=W.solved?'':'none';b.classList.toggle('on',W.state==='treated')}})};
+W.pts=()=>Math.max(10,[100,75,50,25][W.clue-1]-15*W.wrong.length);
+W.card=()=>{const D=DZ[W.dz],P=PAT[W.dz];let h=`<div class="step">Teacher: mystery patient #${W.cs}</div><h3>🕵️ ${P.who}</h3><div class="small" style="font-weight:800;margin-bottom:4px">Clue 1: the story</div><div class="stage">${P.story}</div>`;
+if(W.clue>=2)h+=`<div class="small" style="font-weight:800;margin-bottom:4px">Clue 2: symptoms</div><div class="tags">${D.sym.map(x=>`<span>${x}</span>`).join('')}</div>`;
+if(W.clue>=3)h+=`<p class="small"><b>Clue 3: body scan.</b> The glowing part of the body is where the problem is.</p>`;
+if(W.clue>=4)h+=`<p class="small"><b>Clue 4: inside look.</b> We zoomed in on ${D.inside}.</p>`;
+if(!W.solved){h+=`<div class="small" style="font-weight:800;margin:6px 0 4px">What's the diagnosis? Worth ${W.pts()} points</div><div class="foods">${POOL.map(k=>`<button data-k="${k}" class="${W.wrong.includes(k)?'wrong':''}" ${W.wrong.includes(k)?'disabled':''}><span>${DZ[k].e}</span>${DZ[k].name}</button>`).join('')}</div>`;if(W.clue<4)h+=`<p class="small">Stuck? Press <b>🔎 Next clue</b>. Fewer clues means more points, and each wrong guess costs 15.</p>`}
+else if(W.state==='treated')h+=`<div class="stage" style="border-left-color:#5fe08a">💊 <b>Treating ${D.short}.</b> ${D.tx}</div><div class="tags tx">${D.txs.map(x=>`<span>${x}</span>`).join('')}</div>`;
+else h+=`<div class="stage" style="border-left-color:#5fe08a">✅ <b>${P.who.split(',')[0]} has ${D.short}!</b> ${D.what[1]}</div><p class="small">Press <b>💊 Show treatment</b> to see how it's treated, or <b>🎲 New patient</b> for the next case.</p>`;
+h+=`<p class="small">🏆 Class score: <b>${W.score}</b> points, ${W.solvedN} solved</p>`;return h};
+W.bind=()=>{$('labCard').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(W.solved)return;if(k===W.dz){const p=W.pts();W.score+=p;W.solvedN++;W.solved=true;W.hideHi=false;toast(`Correct! +${p} points`)}else{W.wrong.push(k);toast('Not quite. Try again or get another clue.')}W.sync();renderLabCard()})};
 return W}};
 
 TRIPS.stomachP=Object.assign({},TRIPS.stomach,{lesson:22,alias:'stomach',back:'proc:digest'});
