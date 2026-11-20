@@ -92,6 +92,12 @@ body.intrip #menu{display:none!important}
 #labCard .tags span{font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;background:rgba(255,111,97,.14);border:1px solid rgba(255,111,97,.4)}
 #labCard .tags.tx span{background:rgba(95,224,138,.13);border-color:rgba(95,224,138,.45)}
 #labCard .foods button.wrong{opacity:.35;text-decoration:line-through}
+#labCard .teamset{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+#labCard .teamset input{font:inherit;font-weight:700;color:var(--text);background:rgba(255,255,255,.06);border:2px solid;border-radius:10px;padding:7px 10px;min-width:0}
+#labCard .score{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#labCard .score span{font-size:13px;padding:5px 10px;border-radius:99px;border:2px solid var(--c);background:rgba(255,255,255,.04)}
+#labCard .score span.on{background:var(--c);color:#1b1020}
+#labCard .turn{padding:7px 11px;border-radius:10px;color:#1b1020;font-weight:800;margin-bottom:8px}
 #labCard .btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 #labCard .rt{display:flex;align-items:center;justify-content:center;text-align:center;min-height:70px;padding:10px;border-radius:14px;margin:4px 0 8px;font-weight:800;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:rgba(127,211,255,.12);border:1px solid rgba(127,211,255,.35)}
 #labCard .rt.wait{background:#7a1f2b;border-color:#c04050}
@@ -1942,25 +1948,33 @@ leuk:{who:'Maya, age 9',story:'Maya has been pale and tired for weeks. She keeps
 t1d:{who:'Leo, age 12',story:'Leo is always thirsty and keeps getting up at night to pee. He eats a lot but has been losing weight, and he feels wiped out at soccer practice.'},
 asthma:{who:'Ava, age 13',story:'In gym class on cold days, or when there is a lot of pollen, Ava starts coughing and wheezing and feels like she can\'t get enough air. It slowly gets better after she rests.'},
 heart:{who:'Frank, age 61',story:'Frank was shoveling snow when he felt a heavy pressure in his chest that spread down his left arm. He is sweating and feels dizzy. He has high cholesterol and doesn\'t exercise much.'}};
-PROCS.mystery={group:30,title:'Mystery patient',build(){const W=PROCS.dz.build();const POOL=Object.keys(PAT);
-Object.assign(W,{cs:0,clue:1,solved:false,wrong:[],score:0,solvedN:0,last:null,hideHi:true,state:'sick'});
-W.pickCase=()=>{let k;do{k=POOL[Math.floor(Math.random()*POOL.length)]}while(k===W.last&&POOL.length>1);W.last=k;W.cs++;W.clue=1;W.solved=false;W.wrong=[];W.state='sick';W.hideHi=true;return k};
-W.dz=W.pickCase();
+PROCS.mystery={group:30,title:'Mystery patient',build(){const W=PROCS.dz.build();const POOL=Object.keys(PAT);const TC=['#ff6f61','#7fd3ff','#ffe066','#7fffb0'];
+Object.assign(W,{cs:0,clue:1,solved:false,wrong:[],score:0,solvedN:0,last:null,hideHi:true,state:'sick',setup:true,over:false,nT:2,teams:[],turn:0,start:0,names:['Team 1','Team 2','Team 3','Team 4']});
+W.pickCase=()=>{let k;do{k=POOL[Math.floor(Math.random()*POOL.length)]}while(k===W.last&&POOL.length>1);W.last=k;W.cs++;W.clue=1;W.solved=false;W.wrong=[];W.state='sick';W.hideHi=true;if(W.teams.length){W.turn=W.start%W.teams.length;W.start++}return k};
+W.dz=W.pickCase();W.cs=0;
 const baseEnter=W.onEnter;W.onEnter=()=>{baseEnter();W.pick(W.dz)};
 W.newCase=()=>{const k=W.pickCase();if(W.inside){W.inside=false;W.go()}W.pick(k)};
-W.nextClue=()=>{if(W.clue<4&&!W.solved){W.clue++;if(W.clue>=3)W.hideHi=false;if(W.clue===4&&!W.inside){W.inside=true;W.go()}}};
-W.tools=[['new','🎲 New patient',()=>W.newCase()],['clue','🔎 Next clue',()=>W.nextClue()],['in','🔍 Go inside',()=>{W.inside=!W.inside;W.go()}],['tx','💊 Show treatment',()=>W.setState(W.state==='treated'?'sick':'treated')]];
-W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{const t=b.dataset.t;if(t==='clue')b.style.display=W.clue<4&&!W.solved?'':'none';if(t==='in'){b.style.display=W.clue>=4||W.solved?'':'none';b.textContent=W.inside?'⬅ Back to the body':'🔍 Go inside'}if(t==='tx'){b.style.display=W.solved?'':'none';b.classList.toggle('on',W.state==='treated')}})};
+W.pass=()=>{if(W.teams.length)W.turn=(W.turn+1)%W.teams.length};
+W.tname=()=>W.teams.length?W.teams[W.turn].name:'';
+W.nextClue=()=>{if(W.clue<4&&!W.solved){W.clue++;if(W.clue>=3)W.hideHi=false;if(W.clue===4&&!W.inside){W.inside=true;W.go()}if(W.teams.length){W.pass();toast(`Clue ${W.clue}. ${W.tname()}'s turn`)}}};
+W.startGame=()=>{W.teams=W.nT>1?W.names.slice(0,W.nT).map((n,i)=>({name:n.trim()||'Team '+(i+1),col:TC[i],score:0,got:0})):[];W.score=0;W.solvedN=0;W.cs=0;W.start=0;W.setup=false;W.over=false;W.newCase()};
+W.tools=[['new','🎲 New patient',()=>W.newCase()],['clue','🔎 Next clue',()=>W.nextClue()],['in','🔍 Go inside',()=>{W.inside=!W.inside;W.go()}],['tx','💊 Show treatment',()=>W.setState(W.state==='treated'?'sick':'treated')],['end','🏁 End game',()=>{W.over=true;if(W.inside){W.inside=false;W.go()}}]];
+W.sync=()=>{const play=!W.setup&&!W.over;$('labTabs').querySelectorAll('button').forEach(b=>{const t=b.dataset.t;let show=play;if(t==='clue')show=play&&W.clue<4&&!W.solved;if(t==='in'){show=play&&(W.clue>=4||W.solved);b.textContent=W.inside?'⬅ Back to the body':'🔍 Go inside'}if(t==='tx'){show=play&&W.solved;b.classList.toggle('on',W.state==='treated')}if(t==='end')show=play&&W.cs>0;b.style.display=show?'':'none'})};
 W.pts=()=>Math.max(10,[100,75,50,25][W.clue-1]-15*W.wrong.length);
-W.card=()=>{const D=DZ[W.dz],P=PAT[W.dz];let h=`<div class="step">Teacher: mystery patient #${W.cs}</div><h3>🕵️ ${P.who}</h3><div class="small" style="font-weight:800;margin-bottom:4px">Clue 1: the story</div><div class="stage">${P.story}</div>`;
+W.board=()=>W.teams.length?`<div class="score">${W.teams.map((t,i)=>`<span class="${i===W.turn&&!W.solved?'on':''}" style="--c:${t.col}">${t.name}: <b>${t.score}</b></span>`).join('')}</div>`:`<p class="small">🏆 Class score: <b>${W.score}</b> points, ${W.solvedN} solved</p>`;
+W.card=()=>{if(W.setup){let h=`<div class="step">Teacher: mystery patient</div><h3>🕵️ Who's playing?</h3><div class="btns">${[1,2,3,4].map(n=>`<button data-n="${n}" class="${W.nT===n?'on':''}">${n===1?'Whole class':n+' teams'}</button>`).join('')}</div>`;if(W.nT>1)h+=`<div class="teamset">${W.names.slice(0,W.nT).map((n,i)=>`<input data-ti="${i}" value="${n.replace(/"/g,'&quot;')}" maxlength="18" style="border-color:${TC[i]}">`).join('')}</div><p class="small">Click a team name to rename it. Teams take turns: on your turn, guess the disease or get the next clue. Getting a clue or guessing wrong passes the turn to the next team.</p>`;else h+=`<p class="small">The whole class works together and earns one shared score.</p>`;return h+`<div class="btns"><button data-k="start" class="hot">▶ Start the game</button></div>`}
+if(W.over){let h=`<div class="step">Teacher: mystery patient</div><h3>🏁 Final results</h3>`;if(W.teams.length){const st=W.teams.slice().sort((a,b)=>b.score-a.score);const top=st.filter(t=>t.score===st[0].score);h+=`<div class="stage">${st[0].score===0?'Nobody scored yet. Play another round!':top.length>1?'🤝 It\'s a tie between '+top.map(t=>t.name).join(' and ')+'!':'🏆 <b>'+st[0].name+' wins!</b>'}</div><div class="bars">${st.map((t,i)=>`<span>${['🥇','🥈','🥉','4th'][i]} ${t.name}</span><div class="small"><b>${t.score}</b> points, ${t.got} solved</div>`).join('')}</div>`}else h+=`<div class="stage">🏆 The class scored <b>${W.score}</b> points and solved ${W.solvedN} of ${W.cs} patients.</div>`;return h+`<div class="btns"><button data-k="again" class="hot">🔁 New game</button><button data-k="more">Keep playing</button></div>`}
+const D=DZ[W.dz],P=PAT[W.dz];let h=`<div class="step">Teacher: mystery patient #${W.cs}</div>`;if(W.teams.length&&!W.solved)h+=`<div class="turn" style="background:${W.teams[W.turn].col}">🎯 ${W.tname()}'s turn: guess or get a clue</div>`;
+h+=`<h3>🕵️ ${P.who}</h3><div class="small" style="font-weight:800;margin-bottom:4px">Clue 1: the story</div><div class="stage">${P.story}</div>`;
 if(W.clue>=2)h+=`<div class="small" style="font-weight:800;margin-bottom:4px">Clue 2: symptoms</div><div class="tags">${D.sym.map(x=>`<span>${x}</span>`).join('')}</div>`;
 if(W.clue>=3)h+=`<p class="small"><b>Clue 3: body scan.</b> The glowing part of the body is where the problem is.</p>`;
 if(W.clue>=4)h+=`<p class="small"><b>Clue 4: inside look.</b> We zoomed in on ${D.inside}.</p>`;
-if(!W.solved){h+=`<div class="small" style="font-weight:800;margin:6px 0 4px">What's the diagnosis? Worth ${W.pts()} points</div><div class="foods">${POOL.map(k=>`<button data-k="${k}" class="${W.wrong.includes(k)?'wrong':''}" ${W.wrong.includes(k)?'disabled':''}><span>${DZ[k].e}</span>${DZ[k].name}</button>`).join('')}</div>`;if(W.clue<4)h+=`<p class="small">Stuck? Press <b>🔎 Next clue</b>. Fewer clues means more points, and each wrong guess costs 15.</p>`}
+if(!W.solved){h+=`<div class="small" style="font-weight:800;margin:6px 0 4px">What's the diagnosis? Worth ${W.pts()} points</div><div class="foods">${POOL.map(k=>`<button data-k="${k}" class="${W.wrong.includes(k)?'wrong':''}" ${W.wrong.includes(k)?'disabled':''}><span>${DZ[k].e}</span>${DZ[k].name}</button>`).join('')}</div>`;if(W.clue<4)h+=`<p class="small">Fewer clues means more points, and each wrong guess costs 15.</p>`}
 else if(W.state==='treated')h+=`<div class="stage" style="border-left-color:#5fe08a">💊 <b>Treating ${D.short}.</b> ${D.tx}</div><div class="tags tx">${D.txs.map(x=>`<span>${x}</span>`).join('')}</div>`;
 else h+=`<div class="stage" style="border-left-color:#5fe08a">✅ <b>${P.who.split(',')[0]} has ${D.short}!</b> ${D.what[1]}</div><p class="small">Press <b>💊 Show treatment</b> to see how it's treated, or <b>🎲 New patient</b> for the next case.</p>`;
-h+=`<p class="small">🏆 Class score: <b>${W.score}</b> points, ${W.solvedN} solved</p>`;return h};
-W.bind=()=>{$('labCard').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(W.solved)return;if(k===W.dz){const p=W.pts();W.score+=p;W.solvedN++;W.solved=true;W.hideHi=false;toast(`Correct! +${p} points`)}else{W.wrong.push(k);toast('Not quite. Try again or get another clue.')}W.sync();renderLabCard()})};
+return h+W.board()};
+W.bind=()=>{const c=$('labCard');c.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{W.nT=+b.dataset.n;renderLabCard()});c.querySelectorAll('[data-ti]').forEach(inp=>inp.oninput=()=>{W.names[+inp.dataset.ti]=inp.value});
+c.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(k==='start')W.startGame();else if(k==='again'){W.setup=true;W.over=false}else if(k==='more')W.over=false;else if(!W.solved){if(k===W.dz){const p=W.pts();W.solved=true;W.hideHi=false;W.solvedN++;if(W.teams.length){const t=W.teams[W.turn];t.score+=p;t.got++;toast(`${t.name} got it! +${p} points`)}else{W.score+=p;toast(`Correct! +${p} points`)}}else{W.wrong.push(k);if(W.teams.length){const t0=W.tname();W.pass();toast(`Not ${DZ[k].short}. ${W.tname()}'s turn`)}else toast('Not quite. Try again or get another clue.')}}W.sync();renderLabCard()})};
 return W}};
 
 TRIPS.stomachP=Object.assign({},TRIPS.stomach,{lesson:22,alias:'stomach',back:'proc:digest'});
