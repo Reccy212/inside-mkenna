@@ -100,6 +100,11 @@ body.intrip #menu{display:none!important}
 #labCard .tbar{height:8px;border-radius:99px;background:rgba(0,0,0,.18);overflow:hidden;margin-top:6px}
 #labCard .tbar div{height:100%;border-radius:99px;width:100%}
 #labCard .turn{padding:7px 11px;border-radius:10px;color:#1b1020;font-weight:800;margin-bottom:8px}
+#labCard .msteps{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:2px;font-size:12.5px}
+#labCard .msteps li{padding:4px 8px;border-radius:8px;opacity:.55;display:flex;gap:8px}
+#labCard .msteps li b{min-width:74px;color:var(--gold,#ffd166)}
+#labCard .msteps li.done{opacity:.85}
+#labCard .msteps li.on{opacity:1;background:rgba(127,211,255,.14);font-weight:800}
 #labCard .btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 #labCard .rt{display:flex;align-items:center;justify-content:center;text-align:center;min-height:70px;padding:10px;border-radius:14px;margin:4px 0 8px;font-weight:800;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:rgba(127,211,255,.12);border:1px solid rgba(127,211,255,.35)}
 #labCard .rt.wait{background:#7a1f2b;border-color:#c04050}
@@ -306,7 +311,7 @@ const LESSONS=[
 {n:12,q:'Does this chemical reaction to burn food happen inside our bodies?',u:'Reaction lab inside a cell, and a visit to the mitochondria',h:'b61f7a45321ca210a0c0aed53b711843008e125e97f1dcb34d6f9ae4eef11e80',acts:[['lab:cellrx','Reaction in a cell'],['trip:cellmito','Mitochondria']]},
 {n:13,q:"How does a healthy body use food for energy and growth, and how is M'Kenna's body functioning differently?",u:"Compare a healthy cell with one of M'Kenna's cells",h:'aa6422fe6de8bd3fe4b5b959d6077d5337f50be9f2fd3ca6542fa4ec3fd2ed4b',acts:[['trip:cellmk','Compare cells']]},
 {n:14,q:'Do all animals do chemical reactions to get energy from food like humans?',u:'Compare how different animals get energy',h:'4a9394a43c4ba6fdd31e3dd67b3377777ac7d36ab0a040d4f0895d7e31940837',acts:[['panel:animals','Animals']]},
-{n:16,badge:'🧠',label:'Bonus',q:'The brain',u:'A full 3D brain to explore, plus rides through its fluid-filled spaces and along a neuron',h:'6c2356e7e6138057f6229efa19c34b6fb0faad8dea703e7d1b38cff255eb4b8b',acts:[['brain','Brain explorer'],['trip:brainv','Fly inside'],['trip:neuron','Neurons']]},
+{n:16,badge:'🧠',label:'Bonus',q:'The brain',u:'A full 3D brain to explore, plus rides through its fluid-filled spaces and along a neuron',h:'6c2356e7e6138057f6229efa19c34b6fb0faad8dea703e7d1b38cff255eb4b8b',acts:[['brain','Brain explorer'],['proc:mind','⚡ Brain in action'],['trip:brainv','Fly inside'],['trip:neuron','Neurons']]},
 {n:21,badge:'🫁',label:'Staying alive',q:'Gas exchange and circulation',u:'How breathing and the heartbeat keep oxygen moving to every cell, all on their own',h:'04d492669f6293347b354b90ba1a0079733d18dc208d04d603052da841d21bb0',acts:[['proc:breathe','Breathing'],['proc:circ','Heartbeat and blood flow']]},
 {n:22,badge:'🍎',label:'Staying alive',q:'Fuel and waste',u:'How food becomes fuel for your cells, and how your body cleans out what it doesn\'t need',h:'4f2d0e54a6febf3bc356fbd27ab1b6462814d12b344a0c8625565470cb9cf30a',acts:[['proc:digest','Digestion and absorption'],['proc:filter','Filtering and waste']]},
 {n:23,badge:'🛡️',label:'Staying alive',q:'Balance and protection',u:'How your body keeps its temperature steady, fights off germs and repairs itself',h:'e57f43bbea461b9b3f3f94848a3bd844e1d16635937724ab686c9f9a00deb000',acts:[['proc:temp','Body temperature'],['proc:immune','Fighting germs'],['proc:heal','Healing and clotting']]},
@@ -2052,6 +2057,108 @@ if(Math.random()<dt*5*W.vit)W.P.push({t:'vit',p:new THREE.Vector3(rnd(-6,6),rnd(
 const kill=W.abx>.3;let n=0;W.P=W.P.filter(o=>{o.life+=dt;if(o.t==='scfa'){o.p.lerp(o.to,Math.min(1,dt*1.8));if(o.life>1.2)return false}else{o.p.addScaledVector(o.v,dt);if(o.t==='gas'&&o.p.y>3.5)return false;if(o.life>(o.t==='pill'?6:o.t==='vit'?2:4.5))return false;if(o.p.x>7.2)return false}
 if(n<500){const s2=o.t==='gas'?o.sz:o.t==='pill'?1.6:o.t==='fib'?1.2:1;sc.set(o.t==='pill'?s2*1.8:s2,s2,s2);q.identity();m.compose(o.p,q,sc);W.pm.setMatrixAt(n,m);W.pm.setColorAt(n,PC[o.t]);n++}return true});W.pm.count=n;W.pm.instanceMatrix.needsUpdate=true;if(W.pm.instanceColor)W.pm.instanceColor.needsUpdate=true;
 W.cells.material.emissive.setRGB(.45*W.scfa,.3*W.scfa,0)};
+return W}};
+
+const MV=(x,y,z)=>new THREE.Vector3(x,y,z);
+const MP={FT:MV(-2.82,-2.05,.32),WR:MV(-2.68,-1.3,.22),EL:MV(-2.4,.72,.05),SH:MV(-1.6,2.7,-.15),SC:MV(0,2.6,-.58),SL:MV(0,-1.1,-.48),BS:MV(0,3.95,-.12),UA:MV(-2.15,1.7,.22),EYE:MV(-.24,4.5,.7),CH:MV(0,4.32,.36),EAR:MV(-.68,4.42,0),NOSE:MV(0,4.36,.8),OLF:MV(0,4.43,.42),MOUTH:MV(0,4.12,.62),NECK:MV(-.32,3.6,-.1),FOOT:MV(-.9,-5.45,.25),THIGH:MV(-.82,-3.2,.35),HEART:MV(.28,1.4,.42),STOM:MV(.85,.5,.35),DIA:MV(-.6,.62,.2)};
+const MPATH={armIn:[MP.FT,MP.WR,MP.EL,MP.SH,MV(-.6,2.8,-.45),MP.SC],armOut:[MP.SC,MV(-.6,2.75,-.4),MP.SH,MP.UA],spineUp:[MP.SC,MV(0,3.3,-.4),MP.BS],spineDownArm:[MP.BS,MV(0,3.3,-.4),MP.SC,MV(-.6,2.75,-.4),MP.SH,MP.UA],spineDownLeg:[MP.BS,MV(0,3.3,-.4),MP.SC,MV(0,1.2,-.62),MV(0,0,-.55),MP.SL,MV(-.5,-2.0,-.35),MP.THIGH,MV(-.85,-4.0,.1),MP.FOOT],legUp:[MP.FOOT,MV(-.85,-4.0,.1),MP.THIGH,MV(-.5,-2.0,-.35),MP.SL,MV(0,0,-.55),MV(0,1.2,-.62),MP.SC,MV(0,3.3,-.4),MP.BS],eye:[MP.EYE,MV(-.12,4.42,.5),MP.CH],ear:[MP.EAR,MV(-.35,4.28,-.04),MP.BS],nose:[MP.NOSE,MP.OLF],vagusStom:[MP.BS,MV(-.12,3.3,.05),MV(-.1,2.2,.22),MV(.4,1.0,.3),MP.STOM],vagusHeart:[MP.BS,MV(-.12,3.3,.05),MV(-.05,2.2,.25),MP.HEART],mouth:[MP.BS,MV(-.12,4.05,.3),MP.MOUTH],neck:[MP.BS,MV(-.2,3.75,-.1),MP.NECK],phrenic:[MP.BS,MV(0,3.3,-.4),MP.SC,MV(-.35,2.4,.2),MP.DIA]};
+const MSC={
+pain:{e:'🔥',name:'Touch a hot stove',steps:[
+{t:'0 s',lab:'Pain sensors',fx:'FT',col:'#ff5a3c',txt:'Your fingertip touches the hot stove. Heat and pain sensors in your skin fire.'},
+{t:'0.01 s',lab:'Sensory nerve',path:'armIn',col:'#7fd3ff',txt:'The signal races up a sensory nerve in your arm toward your spinal cord, at up to 100 meters per second.'},
+{t:'0.03 s',lab:'Reflex!',path:'armOut',col:'#ff6f61',fx:'UA',txt:'The spinal cord doesn\'t wait for the brain. It sends a signal straight back out to your arm muscles, and your hand jerks away. That\'s a reflex.'},
+{t:'0.04 s',lab:'Up the spinal cord',path:'spineUp',col:'#7fd3ff',txt:'At the same time, the message keeps going up the spinal cord to the brainstem.'},
+{t:'0.06 s',lab:'Thalamus',reg:['thalamus'],cam:'head',txt:'The thalamus is the relay station. It sorts incoming messages and sends each one to the right part of the brain.'},
+{t:'0.1 s',lab:'Sensory strip: "OUCH!"',reg:['parietal'],strip:'sense',txt:'The sensory strip in your parietal lobe works out what you feel and where: burning pain in your right fingertip. Only now do you actually feel it. The left side of your brain handles the right side of your body.'},
+{t:'0.2 s',lab:'Amygdala',reg:['amygdala'],txt:'The amygdala adds the feeling: a jolt of fear, and "that was bad!"'},
+{t:'0.5 s',lab:'Frontal lobe',reg:['frontal'],txt:'Your frontal lobe makes a plan: get that hand under cold water.'},
+{t:'1 s',lab:'Hippocampus',reg:['hippocampus'],txt:'The hippocampus saves the memory, so next time you\'ll be careful around the stove.'},
+{t:'1.5 s',lab:'Motor strip',reg:['frontal'],strip:'motor',path:'spineDownArm',col:'#ff9a3c',fx:'UA',cam:'body',txt:'The motor strip at the back of your frontal lobe sends commands down the spinal cord, and your arm and legs carry you to the sink.'}]},
+kick:{e:'⚽',name:'Kick a ball',steps:[
+{t:'0 s',lab:'Eyes',fx:'EYE',col:'#ffffff',cam:'head',txt:'Light bouncing off the ball hits the retina at the back of your eye.'},
+{t:'0.02 s',lab:'Optic nerve',path:'eye',col:'#7fd3ff',to:'thalamus',txt:'The optic nerve carries the picture into your brain, to the thalamus.'},
+{t:'0.05 s',lab:'Occipital lobe',reg:['occipital'],txt:'The occipital lobe at the back of your brain turns the signals into a picture: a ball, rolling toward you.'},
+{t:'0.1 s',lab:'Parietal lobe',reg:['parietal'],txt:'The parietal lobe works out where the ball is and how fast it\'s coming.'},
+{t:'0.2 s',lab:'Frontal lobe',reg:['frontal'],txt:'Your frontal lobe decides: kick it!'},
+{t:'0.25 s',lab:'Basal ganglia',reg:['basal'],txt:'Deep inside, the basal ganglia help start the movement smoothly and pick the right muscles.'},
+{t:'0.3 s',lab:'Motor strip',reg:['frontal'],strip:'motor',path:'spineDownLeg',col:'#ff9a3c',fx:'THIGH',cam:'body',txt:'The motor strip sends commands down your spinal cord to your leg muscles. Your thigh muscles swing your leg forward.'},
+{t:'0.4 s',lab:'Cerebellum',reg:['cerebellum'],path:'legUp',col:'#7fd3ff',to:'cerebellum',cam:'head',txt:'Sensors in your muscles and joints report back, and the cerebellum fine-tunes your timing and balance, so you hit the ball and don\'t fall over.'}]},
+wave:{e:'👋',name:'See a friend and wave',steps:[
+{t:'0 s',lab:'Eyes',fx:'EYE',col:'#ffffff',cam:'head',txt:'You spot someone across the hallway.'},
+{t:'0.02 s',lab:'Optic nerve',path:'eye',col:'#7fd3ff',to:'thalamus',txt:'The picture travels along the optic nerve to the thalamus.'},
+{t:'0.05 s',lab:'Occipital lobe',reg:['occipital'],txt:'The occipital lobe builds the picture: a face.'},
+{t:'0.15 s',lab:'Temporal lobe',reg:['temporal'],txt:'Part of your temporal lobe is specialized for faces. It recognizes this one.'},
+{t:'0.25 s',lab:'Hippocampus',reg:['hippocampus'],txt:'The hippocampus pulls up the memory: it\'s your friend Jordan!'},
+{t:'0.3 s',lab:'Amygdala',reg:['amygdala'],txt:'The amygdala adds a happy feeling.'},
+{t:'0.4 s',lab:'Frontal lobe',reg:['frontal'],txt:'Your frontal lobe decides to wave.'},
+{t:'0.5 s',lab:'Motor strip',reg:['frontal'],strip:'motor',path:'spineDownArm',col:'#ff9a3c',fx:'UA',cam:'body',txt:'The motor strip sends commands down to your shoulder and arm muscles, and you wave.'}]},
+smell:{e:'🍕',name:'Smell pizza',steps:[
+{t:'0 s',lab:'Nose',fx:'NOSE',col:'#ffd27a',cam:'head',txt:'Smell molecules from the pizza float into your nose and land on smell nerve cells.'},
+{t:'0.02 s',lab:'Olfactory bulb',path:'nose',col:'#ffd27a',to:'amygdala',txt:'Smell signals go to the olfactory bulb and then straight to the amygdala. Smell is the only sense that skips the thalamus.'},
+{t:'0.05 s',lab:'Hippocampus',reg:['hippocampus'],txt:'Smell connects directly to memory, which is why one whiff of pizza can bring back a whole birthday party.'},
+{t:'0.1 s',lab:'Hypothalamus',reg:['hypothalamus'],txt:'The hypothalamus, which controls hunger, says: you\'re hungry!'},
+{t:'0.3 s',lab:'Frontal lobe',reg:['frontal'],txt:'Your frontal lobe thinks: I want a slice. (It also reminds you to wait your turn.)'},
+{t:'0.4 s',lab:'Vagus nerve',reg:['brainstem'],path:'vagusStom',col:'#c9a7ff',fx:'STOM',cam:'body',txt:'The brainstem sends signals along the vagus nerve to your stomach, which starts getting ready to digest. Your mouth waters and your stomach might growl.'}]},
+hear:{e:'👂',name:'Hear your name',steps:[
+{t:'0 s',lab:'Ear',fx:'EAR',col:'#9fe3ff',cam:'head',txt:'Sound waves of someone calling your name shake your eardrum, and hair cells in the cochlea fire.'},
+{t:'0.01 s',lab:'Hearing nerve',path:'ear',col:'#7fd3ff',to:'thalamus',txt:'The hearing nerve carries the signal to the brainstem and up to the thalamus.'},
+{t:'0.05 s',lab:'Temporal lobe',reg:['temporal'],txt:'The temporal lobe, right beside your ears, processes the sound and its language areas recognize a word: your name!'},
+{t:'0.15 s',lab:'Frontal lobe',reg:['frontal'],txt:'Your frontal lobe shifts your attention. Your own name is one of the hardest sounds to ignore.'},
+{t:'0.25 s',lab:'Motor strip',reg:['frontal'],strip:'motor',path:'neck',col:'#ff9a3c',fx:'NECK',txt:'Commands go down to your neck muscles, and you turn your head toward the voice.'}]},
+read:{e:'📖',name:'Read out loud',steps:[
+{t:'0 s',lab:'Eyes',fx:'EYE',col:'#ffffff',cam:'head',txt:'Your eyes move along the line of words.'},
+{t:'0.02 s',lab:'Optic nerve',path:'eye',col:'#7fd3ff',to:'thalamus',txt:'The image goes along the optic nerve to the thalamus.'},
+{t:'0.05 s',lab:'Occipital lobe',reg:['occipital'],txt:'The occipital lobe sees the shapes of the letters.'},
+{t:'0.15 s',lab:'Temporal lobe',reg:['temporal'],txt:'Language areas in the temporal lobe (usually on the left side) turn the letters into words with meaning.'},
+{t:'0.25 s',lab:'Frontal lobe',reg:['frontal'],txt:'A speech area in the frontal lobe plans how to say each word.'},
+{t:'0.35 s',lab:'Motor strip',reg:['frontal'],strip:'motor',path:'mouth',col:'#ff9a3c',fx:'MOUTH',txt:'The motor strip controls dozens of muscles in your lips, tongue, jaw and voice box, and the word comes out.'},
+{t:'0.4 s',lab:'Cerebellum',reg:['cerebellum'],txt:'The cerebellum keeps all those tiny movements smooth and well-timed, so you don\'t stumble over the words.'}]},
+breathe:{e:'🫁',name:'Breathe without thinking',steps:[
+{t:'always',lab:'Brainstem',reg:['brainstem'],cam:'head',txt:'Your brainstem runs the body\'s automatic jobs: breathing, heartbeat and digestion. It works even while you\'re asleep.'},
+{t:'every breath',lab:'CO₂ sensors',reg:['brainstem'],txt:'Sensors in your brainstem track carbon dioxide, the waste gas from your cells using glucose for energy. When it builds up, it\'s time to breathe.'},
+{t:'every breath',lab:'Phrenic nerve',path:'phrenic',col:'#ff9a3c',fx:'DIA',cam:'body',breathe:1,txt:'The brainstem sends a signal down your spinal cord and the phrenic nerve to your diaphragm. It contracts and pulls air into your lungs.'},
+{t:'every beat',lab:'Vagus nerve',path:'vagusHeart',col:'#c9a7ff',fx:'HEART',breathe:1,txt:'Along the vagus nerve, the brainstem also tunes how fast your heart beats. You can hold your breath for a while, but as CO₂ builds up, the brainstem takes back control.'}]}};
+PROCS.mind={group:16,title:'Brain in action',pre:async()=>{await getBrainGLB()},build(){
+const s=labScene(0x0b1024);const nar=innerWidth/innerHeight<1.1;
+const W={scene:s,keep:true,sc:'pain',si:-1,st:0,play:false,follow:true,glow:{},fx:[],lastPt:null,breath:0,
+camP:{body:nar?[[0,-.6,25],[0,-1.4,0]]:[[3.2,1.8,15.5],[-2.9,1.2,0]],head:nar?[[.5,5.3,6.6],[0,3.55,0]]:[[1.7,5.25,3.6],[-.95,4.42,0]]}};W.cam=W.camP.body[0];W.target=W.camP.body[1];
+s.add(bodyPart('body',procGhost()));{const sk=bodyPart('skeleton',new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,transparent:true,opacity:.3,depthWrite:false}));sk.renderOrder=2;s.add(sk)}
+['stomach','heart'].forEach(id=>{const m=faint(id,.25);if(m)s.add(m)});const lp=new THREE.Group();lp.position.set(0,2.75,0);s.add(lp);{const lu=bodyPart('lungs',orgMat({opacity:.22}));lu.material.depthWrite=false;lu.position.set(0,-2.75,0);lp.add(lu)}W.lp=lp;
+const nm=new THREE.MeshBasicMaterial({color:0xffe08a,transparent:true,opacity:.55,depthWrite:false});
+const tube=(pts,r)=>{const me=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),Math.max(16,pts.length*14),r,6),nm);me.renderOrder=4;s.add(me)};
+tube([MP.BS,MV(0,3.3,-.4),MP.SC,MV(0,1.2,-.62),MV(0,0,-.55),MP.SL,MV(0,-1.6,-.5)],.045);
+[1,-1].forEach(sg=>{const fl=v=>MV(sg<0?v.x:-v.x,v.y,v.z);tube(MPATH.armIn.map(fl),.022);tube([MP.SL,MV(-.5,-2.0,-.35),MP.THIGH,MV(-.85,-4.0,.1),MP.FOOT].map(fl),.025)});
+tube(MPATH.phrenic.slice(2),.015);tube(MPATH.vagusStom,.015);tube(MPATH.vagusHeart.slice(2),.015);
+const BRC=MV(0,4.55,.03),BRS=.6;const brain=new THREE.Group();brain.position.copy(BRC);brain.scale.setScalar(BRS);s.add(brain);W.parts={};
+brainGLB.scene.traverse(o=>{if(!o.isMesh)return;const id=brainPartId(o.name);if(!id||o.name.startsWith('arteries')||o.name.startsWith('ventricles'))return;const me=new THREE.Mesh(o.geometry,orgMat({opacity:id==='spinal'?.5:.62,emissive:new THREE.Color(0,0,0)}));me.material.depthWrite=false;me.renderOrder=3;brain.add(me);if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const c=o.geometry.boundingBox.getCenter(new THREE.Vector3());(W.parts[id]=W.parts[id]||[]).push({me,c,name:o.name})});
+const toBody=c=>c.clone().multiplyScalar(BRS).add(BRC);
+W.regPt=id=>{const L=W.parts[id];if(!L)return BRC.clone();const pick=L.length>1?L.filter(p=>p.c.x>0):L;return toBody((pick.length?pick:L)[0].c)};
+W.regMeshes=id=>{const L=W.parts[id]||[];const pick=L.length>1?L.filter(p=>p.c.x>0):L;return(pick.length?pick:L).map(p=>p.me)};
+W.strips={};['motor','sense'].forEach((k,ki)=>{const g=new THREE.Group();for(let i=0;i<12;i++){const a=.15+i/11*1.3;const sp=glowS(k==='motor'?0xff9a3c:0xffd166,.13);sp.position.copy(toBody(MV(.82*Math.cos(a),.12+.72*Math.sin(a),ki?-.02:.14)));g.add(sp)}g.visible=false;s.add(g);W.strips[k]=g});
+W.P=mkPulses(s,120,.06);
+W.onEnter=()=>{W.Lc=labLabel('');W.Lc.style.display='none'};
+W.setSc=k=>{W.sc=k;W.si=-1;W.st=0;W.play=false;W.P.clear();W.fx.forEach(f=>s.remove(f.sp));W.fx=[];Object.values(W.strips).forEach(g=>g.visible=false);W.glow={};if(W.follow)camTo(W,...W.camP.body)};
+W.doStep=i=>{const S=MSC[W.sc].steps[i];W.si=i;W.st=0;const col=new THREE.Color(S.col||'#fff3a0');
+if(S.cam&&W.follow){const c=W.camP[S.cam];camTo(W,c[0],c[1])}
+let end=null;if(S.path){const pts=MPATH[S.path].map(p=>p.clone());if(S.to)pts.push(W.regPt(S.to));W.P.add(new THREE.CatmullRomCurve3(pts),.75,{col,sz:1.5});end=pts[pts.length-1]}
+if(S.reg){S.reg.forEach(r=>{const pt=W.regPt(r);if(W.lastPt&&!S.path)W.P.add(polyC([W.lastPt,pt]),1.4,{col:new THREE.Color(1,.95,.6),sz:1.2});W.regMeshes(r).forEach(me=>W.glow[me.uuid]={me,v:1,c:new THREE.Color(BP[r]?BP[r].col:'#fff')});if(!end)end=pt})}
+if(S.to)W.regMeshes(S.to).forEach(me=>W.glow[me.uuid]={me,v:1,c:new THREE.Color(BP[S.to]?BP[S.to].col:'#fff')});
+Object.values(W.strips).forEach(g=>g.visible=false);if(S.strip)W.strips[S.strip].visible=true;
+if(S.fx){const sp=glowS(new THREE.Color(S.col||'#ffb347'),.9);sp.position.copy(MP[S.fx]);s.add(sp);W.fx.push({sp,t:0});if(!end)end=MP[S.fx].clone()}
+W.lastPt=end||W.lastPt;W.labPt=(S.reg?W.regPt(S.reg[0]):S.fx?MP[S.fx]:end||BRC).clone();if(W.Lc)W.Lc.textContent=S.lab};
+W.tools=[['play','▶ Play',()=>{const n=MSC[W.sc].steps.length;if(W.play){W.play=false;return}if(W.si<0||W.si>=n-1){W.setSc(W.sc);W.lastPt=null;W.doStep(0)}W.play=true}],['step','⏭ Next step',()=>{W.play=false;const n=MSC[W.sc].steps.length;if(W.si<n-1)W.doStep(W.si+1)}],['follow','🎥 Follow the signal',()=>{W.follow=!W.follow}]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{const t=b.dataset.t;if(t==='play')b.textContent=W.play?'⏸ Pause':(W.si>=MSC[W.sc].steps.length-1?'🔁 Replay':'▶ Play');if(t==='follow')b.classList.toggle('on',W.follow)})};
+W.card=()=>{const S=MSC[W.sc];let h=`<div class="step">Bonus: the brain</div><h3>What happens when you...</h3><div class="foods">${Object.keys(MSC).map(k=>`<button data-k="${k}" class="${W.sc===k?'on':''}"><span>${MSC[k].e}</span>${MSC[k].name}</button>`).join('')}</div>`;
+h+=`<div class="stage" id="mdStage">${W.si<0?'Press <b>▶ Play</b> to follow the signal, or <b>⏭ Next step</b> to go one step at a time.':S.steps[W.si].txt}</div><ol class="msteps">${S.steps.map((x,i)=>`<li class="${i===W.si?'on':i<W.si?'done':''}"><b>${x.t}</b>${x.lab}</li>`).join('')}</ol>`;
+h+=`<div class="legend"><span><i style="background:#7fd3ff"></i>Sensory signal (into the brain)</span><span><i style="background:#ff9a3c"></i>Motor signal (out to muscles)</span><span><i style="background:#fff3a0"></i>Inside the brain</span></div><p class="small">⭐ The brain is the body's control center: about 86 billion neurons passing signals in thousandths of a second. It's only about 2% of your body weight but uses about 20% of your energy, almost all of it from glucose. That's why it's hard to think when you skip meals, and one reason M'Kenna felt so tired when her body couldn't absorb enough food.</p>`;return h};
+W.bind=()=>{$('labCard').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{W.setSc(b.dataset.k);W.sync();renderLabCard()})};
+W.update=(dt,time)=>{runTw(W,dt);W.P.update(dt);const S=MSC[W.sc];
+if(W.si>=0){W.st+=dt;const dur=S.steps[W.si].path?2.6:2.1;if(W.play&&W.st>=dur){if(W.si<S.steps.length-1){W.doStep(W.si+1);renderLabCard()}else{W.play=false;W.sync()}}}
+Object.values(W.parts).forEach(L=>L.forEach(p=>{if(!W.glow[p.me.uuid]){p.me.material.emissive.setRGB(0,0,0);p.me.material.opacity+=((W.si>=0?.28:.62)-p.me.material.opacity)*Math.min(1,dt*3)}}));Object.values(W.glow).forEach(g=>{g.v=Math.max(.22,g.v-dt*.22);const p=.7+.3*Math.sin(time*6);g.me.material.emissive.copy(g.c).multiplyScalar(1.5*g.v*p);g.me.material.opacity=.7+.3*g.v});
+W.fx=W.fx.filter(f=>{f.t+=dt;f.sp.material.opacity=Math.max(0,1-f.t/4);f.sp.scale.setScalar(.7+.25*Math.sin(time*8));if(f.t>4){s.remove(f.sp);return false}return true});
+Object.values(W.strips).forEach(g=>g.children.forEach((c,i)=>c.material.opacity=.5+.5*Math.sin(time*6-i*.6)));
+const br=W.si>=0&&S.steps[W.si].breathe;W.breath+=dt*(br?1.6:1.1);W.lp.scale.setScalar(1+(br?.05:.02)*Math.sin(W.breath*2));
+if(W.Lc&&W.si>=0&&W.labPt)labPlace(W.Lc,W.labPt,!W.tw);else if(W.Lc)W.Lc.style.display='none'};
 return W}};
 
 TRIPS.stomachP=Object.assign({},TRIPS.stomach,{lesson:22,alias:'stomach',back:'proc:digest'});
