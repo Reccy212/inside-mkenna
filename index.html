@@ -85,6 +85,11 @@ body.intrip #menu{display:none!important}
 #labTabs.tools button.on{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
 #labTabs.tools button.hot{background:linear-gradient(135deg,#ffb347,#ff6f61);color:#1b1020;border:none}
 #labCard .stage{font-size:15px;line-height:1.5;padding:10px 12px;border-radius:12px;background:rgba(127,211,255,.08);border-left:3px solid #7fd3ff;margin-bottom:10px;min-height:66px}
+#labCard .foods{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+#labCard .foods button{display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:12px;padding:8px 4px;font-size:12px}
+#labCard .foods button span{font-size:24px}
+#labCard .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;font-weight:700;margin-bottom:10px}
+#labCard .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
 #labCard .ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:10px;border-radius:12px;background:rgba(255,255,255,.05);font-size:13px}
 #labCard .ctl input[type=range]{flex:1;min-width:140px;accent-color:#ffb347}
 #labCard .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -285,6 +290,7 @@ const LESSONS=[
 {n:14,q:'Do all animals do chemical reactions to get energy from food like humans?',u:'Compare how different animals get energy',h:'4a9394a43c4ba6fdd31e3dd67b3377777ac7d36ab0a040d4f0895d7e31940837',acts:[['panel:animals','Animals']]},
 {n:16,badge:'🧠',label:'Bonus',q:'The brain',u:'A full 3D brain to explore, plus rides through its fluid-filled spaces and along a neuron',h:'6c2356e7e6138057f6229efa19c34b6fb0faad8dea703e7d1b38cff255eb4b8b',acts:[['brain','Brain explorer'],['trip:brainv','Fly inside'],['trip:neuron','Neurons']]},
 {n:21,badge:'🫁',label:'Staying alive',q:'Gas exchange and circulation',u:'How breathing and the heartbeat keep oxygen moving to every cell, all on their own',h:'04d492669f6293347b354b90ba1a0079733d18dc208d04d603052da841d21bb0',acts:[['proc:breathe','Breathing'],['proc:circ','Heartbeat and blood flow']]},
+{n:22,badge:'🍎',label:'Staying alive',q:'Fuel and waste',u:'How food becomes fuel for your cells, and how your body cleans out what it doesn\'t need',h:'4f2d0e54a6febf3bc356fbd27ab1b6462814d12b344a0c8625565470cb9cf30a',acts:[['proc:digest','Digestion and absorption'],['proc:filter','Filtering and waste']]},
 {n:15,q:'What questions on our Driving Question Board can we now answer?',u:'Put the whole story together',h:'322473b732fdf88b5c2b037ce41771269a80b8cd75ebeff8bac6ffc17cf068eb',acts:[['panel:review','The big picture']]}
 ];
 const MASTER='ee85d756d03ff4f683e368a2b9b0b1fa0b94053f09f29f878f66c924f7ecf2bc';
@@ -368,7 +374,7 @@ function loadJSON(url){return fetch(url).then(r=>r.json())}
 function showLoading(t,p){$('loading').classList.remove('hidden');$('loadText').textContent=t;$('loadBar').style.width=Math.round((p||0)*100)+'%'}
 function hideLoading(){$('loading').classList.add('hidden')}
 
-const BODYG={};
+const BODYG={};let BODYPATHS=null;
 async function loadBody(){
 showLoading('Loading the 3D body',0);
 const g=await loadGLB('models/body.glb',p=>showLoading('Loading the 3D body',p));
@@ -380,7 +386,7 @@ const opts=id==='lungs'?{opacity:.86,roughness:.6,clearcoat:.2}:id==='liver'?{ro
 o.material=orgMat(opts);if(id==='lungs'){o.renderOrder=2;o.material.depthWrite=false}
 if(id==='largeInt'){o.material.onBeforeCompile=sh=>{sh.uniforms.uMk=U.mk;sh.vertexShader='uniform float uMk;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=normal*.035*uMk;')};liMesh=o}
 reg(id,o)});
-const paths=await loadJSON('models/paths_out.json');buildJourney(paths);buildGas(paths);
+const paths=await loadJSON('models/paths_out.json');BODYPATHS=paths;buildJourney(paths);buildGas(paths);
 bodyReady=true;hideLoading();applyDim(filterSet());addHeadBrain();
 }
 
@@ -947,13 +953,14 @@ const done=W.state==='done';
 labPlace(W.L.sug,new THREE.Vector3(-4.3,2.7,0),W.state==='idle');labPlace(W.L.ox,new THREE.Vector3(-.7,3.5,0),W.state==='idle');labPlace(W.L.co2,new THREE.Vector3(2.9,3.5,0),done);labPlace(W.L.h2o,new THREE.Vector3(5.7,3.5,0),done);labPlace(W.L.mi,new THREE.Vector3(.7,-4.2,0),!fire)};
 return W}
 
-function enterLab(id){const L=LABS[id];if(!L||!has(L.lesson))return;
+const labOk=L=>has(L.lesson)||(L.group==='digest'&&has(22));
+function enterLab(id){const L=LABS[id];if(!L||!labOk(L))return;
 if(trip)leaveNow();select(null);if(journey)stopJourney();$('panel').classList.add('hidden');$('modal').classList.add('hidden');$('labLabels').innerHTML='';
 if(lab)leaveNow();lab=L.group==='digest'?buildDigest(id):buildReact(id);lab.id=id;labControls.minDistance=5;labControls.maxDistance=32;$('labTabs').classList.remove('tools');
 document.body.classList.add('intrip');$('bodyUI').classList.add('hidden');$('labUI').classList.remove('hidden');$('tip').style.display='none';
 controls.enabled=false;labControls.enabled=true;labControls.target.set(...lab.target);labCam.position.set(...lab.cam);labCam.lookAt(labControls.target);
 $('labTitle').textContent=L.group==='digest'?'Molecule lab':'Reaction lab';
-const tabs=$('labTabs');tabs.innerHTML='';Object.keys(LABS).filter(k=>LABS[k].group===L.group&&has(LABS[k].lesson)).forEach(k=>{const b=document.createElement('button');b.textContent=LABS[k].tab;b.classList.toggle('on',k===id);b.onclick=()=>enterLab(k);tabs.appendChild(b)});
+const tabs=$('labTabs');tabs.innerHTML='';Object.keys(LABS).filter(k=>LABS[k].group===L.group&&labOk(LABS[k])).forEach(k=>{const b=document.createElement('button');b.textContent=LABS[k].tab;b.classList.toggle('on',k===id);b.onclick=()=>enterLab(k);tabs.appendChild(b)});
 tabs.classList.toggle('hidden',tabs.children.length<2);
 renderLabCard()}
 function renderLabCard(){if(!lab)return;$('labCard').innerHTML=lab.card();if(lab.bind)lab.bind();const g=$('labGo');if(g)g.onclick=()=>lab.start();const r=$('labReset');if(r)r.onclick=()=>lab.reset()}
@@ -1173,9 +1180,10 @@ T.rate+=((T.fired)-T.rate)*0;T.rateShown=(T.rateShown||1)+((rate)-(T.rateShown||
 hud(T){const r=Math.round((T.rateShown||1)*100);return `<b>How often signals fire</b><div class="meter"><div style="width:${r}%;background:linear-gradient(90deg,#ffd166,#fff3a0)"></div></div><div>${r>70?'Normal: lots of signals':"M'Kenna: fewer signals"}</div>`}
 };
 
+const LC=h=>new THREE.Color(h).convertSRGBToLinear();
 const PROCS={};let procCache={};
 function bodyPart(id,mat){const g=BODYG[id];if(!g)return null;return new THREE.Mesh(g,mat)}
-function procGhost(){const m=ghostMat.clone();m.uniforms.uMk={value:0};m.uniforms.c={value:new THREE.Color(0x8fb4ff)};return m}
+function procGhost(){const m=ghostMat.clone();m.uniforms.uMk={value:0};m.uniforms.c={value:LC(0x8fb4ff)};return m}
 function faint(id,op){const m=bodyPart(id,orgMat({opacity:op||.16}));if(m){m.material.depthWrite=false;m.renderOrder=1}return m}
 function lineCurve(pts){return new THREE.CatmullRomCurve3(pts.map(v3))}
 function setTxt(id,t){const e=$(id);if(e&&e.textContent!==t)e.textContent=t}
@@ -1183,6 +1191,7 @@ function setBar(id,v,col){const e=$(id);if(!e)return;e.style.width=Math.round(cl
 async function enterProc(id){const P=PROCS[id];if(!P||!has(P.group))return;
 if(trip)leaveNow();if(lab)leaveNow();select(null);if(journey)stopJourney();$('panel').classList.add('hidden');$('modal').classList.add('hidden');$('labLabels').innerHTML='';
 try{await bodyP}catch(e){}if(!BODYG.body){toast('Could not load the body. Try refreshing.');return}
+if(P.pre){try{await P.pre()}catch(e){console.error(e);toast('Could not load that part. Try again.');return}}
 const W=procCache[id]||(procCache[id]=P.build());W.id=id;lab=W;renderer.localClippingEnabled=false;
 document.body.classList.add('intrip');$('bodyUI').classList.add('hidden');$('labUI').classList.remove('hidden');$('tip').style.display='none';
 controls.enabled=false;labControls.enabled=true;labControls.minDistance=1.5;labControls.maxDistance=30;
@@ -1209,13 +1218,13 @@ W.dia=dia;W.lungPivot=lungPivot;W.ribPivot=ribPivot;
 W.curves=[];for(let k=0;k<40;k++){const sg=k%2?1:-1;const dest=new THREE.Vector3(.98*sg+rnd(-.38,.38),1.75+rnd(-.65,.75),rnd(-.32,.32));W.curves.push(lineCurve([[0,4.75,1.6],[0,4.05,.62],[0,3.62,.3],[0,3.0,.2],[0,2.45,.1],[.45*sg,2.22,.08],[.82*sg,2.0,.05],[dest.x,dest.y,dest.z]]))}
 const pg=new THREE.SphereGeometry(.055,10,8);
 W.air=new THREE.InstancedMesh(pg,new THREE.MeshStandardMaterial({roughness:.3,emissive:0x333333}),220);for(let i=0;i<220;i++)W.air.setColorAt(i,new THREE.Color(1,1,1));W.air.count=0;W.air.renderOrder=4;s.add(W.air);W.ps=[];
-W.cO=new THREE.Color(0x63e8ff);W.cC=new THREE.Color(0xb8bec8);
+W.cO=LC(0x63e8ff);W.cC=LC(0xb8bec8);
 const Z=new THREE.Vector3(40,1.6,0);W.Z=Z;
 const alv=new THREE.Mesh(new THREE.SphereGeometry(2,48,32),new THREE.MeshPhysicalMaterial({color:0xf2a0b0,transparent:true,opacity:.35,roughness:.3,clearcoat:.8,side:THREE.DoubleSide,depthWrite:false}));alv.position.copy(Z);s.add(alv);W.alv=alv;
 const cpts=[];for(let i=0;i<=40;i++){const a=-1.3+i/40*2.6;cpts.push(new THREE.Vector3(Z.x+Math.sin(a)*2.32,Z.y-1.15+Math.cos(a*1.3)*.25,Z.z+Math.cos(a)*2.32))}
 W.cap=new THREE.CatmullRomCurve3(cpts);
 s.add(new THREE.Mesh(new THREE.TubeGeometry(W.cap,120,.32,16,false),new THREE.MeshPhysicalMaterial({color:0xb02038,transparent:true,opacity:.16,roughness:.3,depthWrite:false})));
-W.rbc=new THREE.InstancedMesh(rbcGeo(.24),new THREE.MeshStandardMaterial({roughness:.5}),14);for(let i=0;i<14;i++)W.rbc.setColorAt(i,new THREE.Color(0x6a1030));s.add(W.rbc);
+W.rbc=new THREE.InstancedMesh(rbcGeo(.24),new THREE.MeshStandardMaterial({roughness:.5}),14);for(let i=0;i<14;i++)W.rbc.setColorAt(i,LC(0x6a1030));s.add(W.rbc);
 W.rd=[];for(let i=0;i<14;i++)W.rd.push({u:i/14,rot:rnd(0,6)});
 W.gas=new THREE.InstancedMesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshStandardMaterial({roughness:.3,emissive:0x222222}),120);for(let i=0;i<120;i++)W.gas.setColorAt(i,new THREE.Color(1,1,1));W.gas.count=0;s.add(W.gas);W.gd=[];
 W.onEnter=()=>{W.L={zoom:labLabel('Zoomed in: one air sac and a capillary')}};
@@ -1244,7 +1253,7 @@ const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1)
 const sp=1/(cyc*.42);
 W.ps=W.ps.filter(o=>{if(!W.hold)o.u+=o.d*dt*sp*(o.d>0?1:.75);if(o.u>1||o.u<0)return false;if(n<220){o.c.getPointAt(o.u,p);m.compose(p,q,sc);W.air.setMatrixAt(n,m);W.air.setColorAt(n,o.o2?W.cO:W.cC);n++}return true});
 W.air.count=n;W.air.instanceMatrix.needsUpdate=true;if(W.air.instanceColor)W.air.instanceColor.needsUpdate=true;
-if(W.view==='zoom'||W.tw){const dark=new THREE.Color(0x5a1030),bright=new THREE.Color(0xe0182c),c=new THREE.Color(),e=new THREE.Euler();W.rd.forEach((o,i)=>{o.u=(o.u+dt*.06)%1;W.cap.getPointAt(o.u,p);o.rot+=dt;e.set(o.rot,o.rot*.6,0);q.setFromEuler(e);sc.setScalar(1);m.compose(p,q,sc);W.rbc.setMatrixAt(i,m);c.copy(dark).lerp(bright,sstep(.25,.6,o.u));W.rbc.setColorAt(i,c)});W.rbc.instanceMatrix.needsUpdate=true;W.rbc.instanceColor.needsUpdate=true;
+if(W.view==='zoom'||W.tw){const dark=LC(0x5a1030),bright=LC(0xe0182c),c=new THREE.Color(),e=new THREE.Euler();W.rd.forEach((o,i)=>{o.u=(o.u+dt*.06)%1;W.cap.getPointAt(o.u,p);o.rot+=dt;e.set(o.rot,o.rot*.6,0);q.setFromEuler(e);sc.setScalar(1);m.compose(p,q,sc);W.rbc.setMatrixAt(i,m);c.copy(dark).lerp(bright,sstep(.25,.6,o.u));W.rbc.setColorAt(i,c)});W.rbc.instanceMatrix.needsUpdate=true;W.rbc.instanceColor.needsUpdate=true;
 if(Math.random()<dt*10){const o2=Math.random()<.55;const i=Math.floor(Math.random()*14);const tgt=W.cap.getPointAt(W.rd[i].u);const st=W.Z.clone().add(new THREE.Vector3(rnd(-1,1),rnd(-.5,1),rnd(-1,1)));W.gd.push(o2?{a:st,b:tgt,t:0,o2}:{a:tgt,b:st,t:0,o2})}
 q.identity();let k=0;W.gd=W.gd.filter(o=>{o.t+=dt*.55;if(o.t>1)return false;p.lerpVectors(o.a,o.b,sstep(0,1,o.t));sc.setScalar(Math.sin(o.t*Math.PI)*.8+.2);m.compose(p,q,sc);W.gas.setMatrixAt(k,m);W.gas.setColorAt(k,o.o2?W.cO:W.cC);k++;return k<120});W.gas.count=k;W.gas.instanceMatrix.needsUpdate=true;if(W.gas.instanceColor)W.gas.instanceColor.needsUpdate=true}
 labPlace(W.L.zoom,W.Z.clone().add(new THREE.Vector3(0,2.25,0)),W.view==='zoom'&&!W.tw);
@@ -1274,7 +1283,7 @@ W.lungC=[1,-1].map(sg=>({c:lineCurve(lungLoop(sg)),cap:.45}));W.bodyC=bodyRoutes
 const tw=W.bodyC.reduce((a,r)=>a+r.w,0);W.pickBody=()=>{let x=Math.random()*tw;for(const r of W.bodyC){x-=r.w;if(x<=0)return r}return W.bodyC[0]};
 W.cells=new THREE.InstancedMesh(new THREE.SphereGeometry(.045,8,6),new THREE.MeshStandardMaterial({roughness:.35,emissive:0x220000}),300);for(let i=0;i<300;i++)W.cells.setColorAt(i,new THREE.Color(1,1,1));W.cells.renderOrder=4;s.add(W.cells);
 W.cd=[];for(let i=0;i<300;i++){const lung=i%3===0;const R=lung?W.lungC[i%2]:W.pickBody();W.cd.push({lung,R,u:Math.random()})}
-W.cR=new THREE.Color(0xff3347);W.cB=new THREE.Color(0x5a6cff);
+W.cR=LC(0xff3347);W.cB=LC(0x5a6cff);
 W.tools=[['lp','Lung loop',()=>{W.loop=W.loop==='lung'?'both':'lung'}],['bl','Body loop',()=>{W.loop=W.loop==='body'?'both':'body'}],['in','Inside the heart ▶',()=>enterTrip('heartP'),true]];
 W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{if(b.dataset.t==='lp')b.classList.toggle('on',W.loop==='lung');if(b.dataset.t==='bl')b.classList.toggle('on',W.loop==='body')})};
 W.card=()=>{let h=`<div class="step">Gas exchange and circulation</div><h3>Heartbeat and blood flow</h3>`;
@@ -1296,6 +1305,111 @@ return W}};
 function ecgVal(t,per){const s=t*per;const g=(c,w,a)=>a*Math.exp(-Math.pow((s-c)/w,2));return g(.08,.025,.12)+g(.2,.008,-.12)+g(.22,.01,1)+g(.24,.009,-.25)+g(.42,.05,.25)}
 TRIPS.lungsP=Object.assign({},TRIPS.lungs,{lesson:21,alias:'lungs',back:'proc:breathe'});
 TRIPS.heartP=Object.assign({},TRIPS.heart,{lesson:21,alias:'heart',back:'proc:circ'});
+
+let kidGLB=null,kidJ=null;
+async function getKidney(){if(!kidGLB){showLoading('Loading the kidneys',0);try{[kidGLB,kidJ]=await Promise.all([loadGLB('models/kidney.glb',p=>showLoading('Loading the kidneys',p)),loadJSON('models/kidney.json')])}finally{hideLoading()}}return kidGLB}
+function kidPart(n,mat){const o=kidGLB.scene.getObjectByName(n);return new THREE.Mesh(o.geometry,mat||orgMat())}
+const FOODS={
+bread:{e:'🍞',name:'Bread',main:'Carbohydrate (starch)',col:0xffd84a,end:'sugar (glucose)',mouth:'Teeth grind it up and saliva starts breaking starch into sugar right away. That is why bread tastes a little sweet if you chew it long enough.',stomach:'Bread mostly just gets mashed into soup here. Stomach acid stops the saliva enzyme from working.',si:'Enzymes from the pancreas and the intestine wall finish breaking starch into single sugar molecules, which pass through the villi into the blood.',fiber:.15},
+chicken:{e:'🍗',name:'Chicken',main:'Protein',col:0x6cff7a,end:'amino acids',mouth:'Teeth tear and grind it into small pieces. Saliva makes it slippery to swallow.',stomach:'Stomach acid and an enzyme called pepsin start cutting proteins into shorter chains.',si:'More enzymes from the pancreas finish cutting the protein into single amino acids, the building blocks your body uses to grow and repair.',fiber:.02},
+butter:{e:'🧈',name:'Butter',main:'Fat',col:0xfff4d8,end:'fatty acids',mouth:'It melts and mixes with the rest of your food. Very little digestion happens yet.',stomach:'Fat floats and slows the stomach down, which is why fatty meals keep you full longer.',si:'Bile from the liver breaks fat into tiny droplets, like dish soap on grease. Then lipase from the pancreas cuts it into fatty acids that go into the lacteals in the villi.',fiber:0},
+apple:{e:'🍎',name:'Apple',main:'Sugar, water and fiber',col:0xff7a7a,end:'sugar and water',mouth:'Crunching breaks the apple into small, juicy pieces.',stomach:'The stomach mixes it into a watery soup. The natural sugar is already small and almost ready to absorb.',si:'Sugar and water pass into the blood quickly. The fiber can\'t be broken down by your enzymes, so it keeps moving.',fiber:.45}};
+PROCS.digest={group:22,title:'Digestion and absorption',build(){
+const s=labScene(0x0b1024);const nar=innerWidth/innerHeight<1.1;const W={scene:s,keep:true,cam:nar?[0,-.2,15]:[3.6,.6,10.6],target:nar?[0,-1.9,0]:[-1.9,.35,0],food:'bread',run:false,u:0,stage:'pick',left:1,abs:0,hours:0};
+s.add(bodyPart('body',procGhost()));
+['esophagus','stomach','liver','pancreas','smallInt','largeInt'].forEach(id=>{const m=bodyPart(id,orgMat({opacity:id==='liver'?.85:1}));s.add(m);if(id==='smallInt'||id==='largeInt'){m.material.transparent=true;m.material.opacity=.75;m.material.depthWrite=false;m.renderOrder=2}});
+['lungs','heart','trachea','skeleton','vessels'].forEach(id=>{const m=faint(id,.12);if(m)s.add(m)});
+const BP=BODYPATHS;const route=[];const mark={};
+const push=(pts,key)=>{mark[key]=route.length;pts.forEach(p=>route.push(p))};
+push([[0,4.05,.62],[0,3.98,.6]],'mouth');push(BP.eso,'eso');push(BP.stomach.filter((_,i)=>i%6===0),'stomach');push(BP.si,'si');push(BP.li,'li');push([[0,-3.25,-.1]],'out');
+const N=route.length;W.curve=lineCurve(route);W.fr={};for(const k in mark)W.fr[k]=mark[k]/(N-1);
+W.siCurve=lineCurve(BP.si);
+W.bolus=new THREE.Mesh(new THREE.IcosahedronGeometry(.13,2),new THREE.MeshStandardMaterial({color:0xffd84a,roughness:.6,emissive:0x332200,transparent:true}));W.bolus.renderOrder=10;W.bolus.material.depthTest=false;s.add(W.bolus);W.bolus.visible=false;
+W.nut=new THREE.InstancedMesh(new THREE.SphereGeometry(.04,8,6),new THREE.MeshBasicMaterial({color:0xffd84a,depthTest:false,transparent:true}),160);W.nut.renderOrder=6;W.nut.count=0;s.add(W.nut);W.nd=[];
+W.portal=lineCurve([[0,-1.15,.12],[-.25,-.5,.2],[-.5,.2,.25],[-.68,.45,.22]]);
+W.picker=()=>`<div class="foods">${Object.keys(FOODS).map(k=>`<button data-food="${k}" class="${W.food===k?'on':''}"><span>${FOODS[k].e}</span>${FOODS[k].name}</button>`).join('')}</div>`;
+W.tools=[['go','▶ Eat it',()=>{W.run=true;W.u=0;W.left=1;W.abs=0;W.hours=0;W.nd=[];W.bolus.visible=true;W.bolus.material.color.set(FOODS[W.food].col);W.done=false}],['st','Inside the stomach ▶',()=>enterTrip('stomachP'),true],['si','Inside the small intestine ▶',()=>enterTrip('siP'),true],['lab','Molecule lab ▶',()=>enterLab(W.food==='chicken'?'protein':W.food==='butter'?'fat':'carbs'),true]];
+W.stageOf=u=>u<W.fr.eso?'mouth':u<W.fr.stomach?'eso':u<W.fr.si?'stomach':u<W.fr.li?'si':u<W.fr.out-.004?'li':'out';
+W.card=()=>{const F=FOODS[W.food];let h=`<div class="step">Fuel and waste</div><h3>Digestion and absorption</h3>`;
+h+=`<p class="small" style="margin-bottom:6px">Pick a food, then press Eat it.</p>${W.picker()}`;
+h+=`<div class="stage" id="dgStage">${W.run?'':`${F.e} <b>${F.name}</b> is mostly ${F.main.toLowerCase()}. Your body has to break it into tiny molecules (${F.end}) small enough to pass into your blood.`}</div>`;
+h+=`<div class="bars"><span>Time since eating</span><div id="dgT" class="small">0 hours</div><span>Food left</span><div class="bar"><div id="dgL"></div></div><span>Nutrients in blood</span><div class="bar"><div id="dgA"></div></div></div>`;
+h+=`<p class="small">⭐ Your digestive tract is about 9 meters long from mouth to end. Food spends hours in your stomach and small intestine, and up to a day or more in your large intestine.</p>`;return h};
+W.bind=()=>{$('labCard').querySelectorAll('[data-food]').forEach(b=>b.onclick=()=>{W.food=b.dataset.food;W.run=false;W.bolus.visible=false;W.nd=[];W.nut.count=0;W.nut.material.color.set(FOODS[W.food].col);renderLabCard()})};
+const stageTxt={mouth:F=>`<b>Mouth.</b> ${F.mouth}`,eso:()=>'<b>Esophagus.</b> Muscles squeeze in waves to push the chewed food down to your stomach in a few seconds.',stomach:F=>`<b>Stomach.</b> ${F.stomach} It churns everything into a thick soup called chyme.`,si:F=>`<b>Small intestine.</b> ${F.si} Watch the nutrients (glowing dots) leave and travel to the liver through the blood.`,li:F=>`<b>Large intestine.</b> ${F.fiber>.1?'The leftover fiber arrives here.':'Not much is left by now.'} Water is taken back into the body and the rest is packed into solid waste.`,out:()=>'<b>Out of the body.</b> Whatever couldn\'t be used leaves as solid waste. Everything useful went into your blood to feed your cells.'};
+const speeds={mouth:.05,eso:.18,stomach:.018,si:.012,li:.02,out:.05};const hrs={mouth:.02,eso:.003,stomach:3,si:4,li:20,out:0};
+W.update=(dt,time)=>{runTw(W,dt);const F=FOODS[W.food];
+if(W.run&&!W.done){const st=W.stageOf(W.u);const segLen=(st==='out'?.01:(W.fr[{mouth:'eso',eso:'stomach',stomach:'si',si:'li',li:'out'}[st]]-W.fr[st]));const du=segLen*speeds[st]*dt*6;W.u=Math.min(1,W.u+du);W.hours+=hrs[st]*du/Math.max(.0001,segLen);
+if(st==='si'&&Math.random()<dt*30){const p=W.curve.getPointAt(W.u);W.nd.push({a:p.clone(),t:0});W.left=Math.max(F.fiber,W.left-.006);W.abs=Math.min(1-F.fiber,W.abs+.006)}
+if(st==='stomach')W.left=Math.max(.7,W.left-dt*.01);
+if(W.u>=1){W.done=true;W.bolus.visible=false}
+const p=W.curve.getPointAt(W.u);if(st==='stomach'){p.x+=.08*Math.sin(time*5);p.y+=.05*Math.cos(time*4)}W.bolus.position.copy(p);W.bolus.scale.setScalar(st==='mouth'?1.1:st==='li'?.5+.6*F.fiber:.5+.5*W.left);W.bolus.rotation.y+=dt*2;
+const tx=stageTxt[st](F);const el=$('dgStage');if(el&&el.dataset.s!==st){el.dataset.s=st;el.innerHTML=tx}}
+else if(W.done){const el=$('dgStage');if(el&&el.dataset.s!=='out'){el.dataset.s='out';el.innerHTML=stageTxt.out(F)}}
+const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();let n=0;
+W.nd=W.nd.filter(o=>{o.t+=dt*.5;if(o.t>1)return false;const k=sstep(0,1,o.t);if(k<.35){p.lerpVectors(o.a,W.portal.getPointAt(0),k/.35)}else W.portal.getPointAt((k-.35)/.65,p);if(n<160){m.compose(p,q,sc);W.nut.setMatrixAt(n++,m)}return true});W.nut.count=n;W.nut.instanceMatrix.needsUpdate=true;
+setTxt('dgT',W.hours<1?Math.round(W.hours*60)+' minutes':W.hours.toFixed(1)+' hours');setBar('dgL',W.run?W.left:1,'#ffb38a');setBar('dgA',W.abs,'#6ee7b0')};
+return W}};
+
+PROCS.filter={group:22,title:'Filtering and waste',pre:getKidney,build(){
+const s=labScene(0x0b1024);const nar=innerWidth/innerHeight<1.1;const W={scene:s,keep:true,cam:nar?[0,-.8,-12]:[-2.6,-.6,-7.4],target:nar?[0,-1.6,0]:[1.2,-.9,0],water:.5,fill:.15,view:'body',peeing:0,ps:[],sw:false,kd:kidJ};
+const d=kidJ;
+s.add(bodyPart('body',procGhost()));
+['kidneys','bladder','ureters','renal'].forEach(n=>s.add(kidPart(n)));
+W.bl=s.children[s.children.length-3];W.blC=v3(d.bladder);W.bl.geometry=W.bl.geometry.clone();W.bl.geometry.translate(-W.blC.x,-W.blC.y,-W.blC.z);W.bl.position.copy(W.blC);
+const vm=bodyPart('vessels',orgMat({opacity:.5}));vm.material.depthWrite=false;vm.renderOrder=1;s.add(vm);
+const li=bodyPart('liver',orgMat({opacity:.5}));li.material.depthWrite=false;li.renderOrder=1;s.add(li);W.liver=li;
+W.lgi=bodyPart('largeInt',orgMat({opacity:.2}));W.lgi.material.depthWrite=false;W.lgi.renderOrder=1;s.add(W.lgi);
+['lungs','heart','stomach','smallInt','skeleton','pancreas','esophagus','trachea'].forEach(id=>{const m=faint(id,.1);if(m)s.add(m)});
+W.blood=[];W.urine=[];
+[1,-1].forEach(sg=>{const r=d.renal[String(sg)];W.blood.push({art:lineCurve(r.art),vein:lineCurve(r.vein)});W.urine.push(lineCurve(d.ureters[String(sg)]))});
+W.urethra=lineCurve(d.urethra);
+W.bp=new THREE.InstancedMesh(new THREE.SphereGeometry(.03,8,6),new THREE.MeshStandardMaterial({roughness:.4}),200);for(let i=0;i<200;i++)W.bp.setColorAt(i,new THREE.Color(1,1,1));W.bp.count=0;W.bp.renderOrder=4;s.add(W.bp);W.bd=[];
+W.up=new THREE.InstancedMesh(new THREE.SphereGeometry(.03,8,6),new THREE.MeshStandardMaterial({roughness:.2,emissive:0x332200}),160);W.up.count=0;W.up.renderOrder=4;s.add(W.up);
+W.waste=new THREE.Mesh(new THREE.IcosahedronGeometry(.12,1),new THREE.MeshStandardMaterial({color:0x7a4a26,roughness:.85}));W.waste.visible=false;W.waste.renderOrder=5;s.add(W.waste);W.liC=lineCurve(BODYPATHS.li.concat([[0,-3.25,-.1]]));W.wu=0;
+const NX=v3(d.nx);W.NX=NX;const neph=new THREE.Group();s.add(neph);
+const cm=new THREE.MeshPhysicalMaterial({vertexColors:true,transparent:true,opacity:.3,roughness:.2,clearcoat:.8,depthWrite:false,side:THREE.DoubleSide});
+neph.add(kidPart('glomerulus'));const cp=kidPart('capsule',cm);cp.renderOrder=3;neph.add(cp);
+const tb=kidPart('tubule',new THREE.MeshPhysicalMaterial({vertexColors:true,transparent:true,opacity:.32,roughness:.25,clearcoat:.8,depthWrite:false,emissive:0x2a2410}));tb.renderOrder=3;neph.add(tb);neph.add(kidPart('peritubular'));
+W.aff=lineCurve(d.aff);W.glom=lineCurve(d.glom);W.tub=lineCurve(d.tub);W.peri=lineCurve(d.peri);
+W.tp=new THREE.InstancedMesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshStandardMaterial({roughness:.3,emissive:0x111111,transparent:true}),420);for(let i=0;i<420;i++)W.tp.setColorAt(i,new THREE.Color(1,1,1));W.tp.count=0;W.tp.renderOrder=5;s.add(W.tp);W.td=[];
+W.blueC=LC(0x5a6cff);W.cols={rbc:LC(0xd0182a),prot:LC(0xa070ff),water:LC(0x6ec8ff),sugar:LC(0xffd84a),salt:LC(0xffffff),urea:LC(0xb8e04a)};
+W.onEnter=()=>{W.L={n:labLabel('One nephron'),g:labLabel('Glomerulus (filter)'),t:labLabel('Tubule'),c:labLabel('To the bladder')}};
+W.tools=[['view','Zoom into a filter',()=>{W.view=W.view==='body'?'neph':'body';if(W.view==='neph')camTo(W,[NX.x+3.2,NX.y-.6,NX.z+12.5],[NX.x+3,NX.y-.4,0]);else camTo(W,W.cam,W.target)}],['sw','Solid waste',()=>{W.sw=!W.sw;W.wu=0;W.waste.visible=W.sw}],['pee','Use the bathroom',()=>{W.peeing=1}],['li','Inside the large intestine ▶',()=>enterTrip('liP'),true]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{if(b.dataset.t==='view'){b.textContent=W.view==='body'?'Zoom into a filter':'Back to the body';b.classList.toggle('on',W.view==='neph')}if(b.dataset.t==='sw')b.classList.toggle('on',W.sw)})};
+W.card=()=>{const neph=W.view==='neph';let h=`<div class="step">Fuel and waste</div><h3>${neph?'Inside a kidney filter':W.sw?'Pushing out solid waste':'Filtering and excretion'}</h3>`;
+h+=`<div class="ctl"><b>Water you drank</b><input type="range" id="wtR" min="0" max="100" value="${Math.round(W.water*100)}"><span id="wtT" class="small"></span></div>`;
+if(neph)h+=`<p>Each kidney has about a million of these filters, called nephrons. Blood is squeezed through the knot of tiny vessels (the glomerulus). Small things like water, sugar, salt and waste get pushed into the tube. Blood cells and proteins are too big, so they stay in the blood.</p><p>Along the tube, the body takes back everything useful: all the sugar, most of the salt and most of the water return to the blood. What's left (extra water, extra salt and waste called urea) becomes urine.</p><div class="legend"><span><i style="background:#d0182a"></i>Blood cell</span><span><i style="background:#a070ff"></i>Protein</span><span><i style="background:#6ec8ff"></i>Water</span><span><i style="background:#ffd84a"></i>Sugar</span><span><i style="background:#fff"></i>Salt</span><span><i style="background:#b8e04a"></i>Urea (waste)</span></div>`;
+else if(W.sw)h+=`<p>Food leftovers your body can't use, plus old cells and bacteria, move through the large intestine. Water is soaked back up along the way. At the end, the rectum stores the solid waste until muscles push it out of the body.</p>`;
+else h+=`<p>Your blood picks up waste from every cell. The liver turns some of it, like leftover protein parts and toxins, into a waste called urea. Your two kidneys clean all your blood about 30 times a day, pulling out urea, extra water and extra salt as urine. Urine drips down two tubes into the bladder.</p>`;
+h+=`<div class="bars"><span>Bladder</span><div class="bar"><div id="flB"></div></div><span>Urine color</span><div class="bar"><div id="flC" style="width:100%"></div></div></div><div id="flMsg" class="small"></div>`;return h};
+W.bind=()=>{const r=$('wtR');if(r)r.oninput=()=>{W.water=r.value/100}};
+W.update=(dt,time)=>{runTw(W,dt);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();
+const prod=.006+.05*W.water;if(!W.peeing)W.fill=Math.min(1,W.fill+dt*prod);else{W.fill=Math.max(0,W.fill-dt*.35);if(W.fill<=0)W.peeing=0}
+W.bl.scale.setScalar(.75+.55*W.fill);
+const urineCol=new THREE.Color().setHSL(.13-.03*(1-W.water),.85,.78-.32*(1-W.water));W.up.material.color.copy(urineCol);
+if(Math.random()<dt*40){const k=Math.floor(Math.random()*2);W.bd.push({k,u:0,art:true,red:true})}
+let n=0;W.bd=W.bd.filter(o=>{o.u+=dt*(o.art?.9:.7);if(o.u>=1){if(o.art){o.art=false;o.u=0;o.red=false}else return false}(o.art?W.blood[o.k].art:W.blood[o.k].vein).getPointAt(Math.min(1,o.u),p);if(n<200){m.compose(p,q,sc);W.bp.setMatrixAt(n,m);W.bp.setColorAt(n,o.red?W.cols.rbc:W.blueC);n++}return true});W.bp.count=n;W.bp.instanceMatrix.needsUpdate=true;W.bp.instanceColor.needsUpdate=true;
+if(Math.random()<dt*(4+30*W.water))W.ps.push({k:Math.floor(Math.random()*2),u:0,pee:false});if(W.peeing&&Math.random()<dt*40)W.ps.push({pee:true,u:0});
+n=0;W.ps=W.ps.filter(o=>{o.u+=dt*(o.pee?1.2:.35);if(o.u>=1)return false;(o.pee?W.urethra:W.urine[o.k]).getPointAt(o.u,p);if(n<160){m.compose(p,q,sc);W.up.setMatrixAt(n++,m)}return true});W.up.count=n;W.up.instanceMatrix.needsUpdate=true;
+W.lgi.material.opacity=W.sw?.8:.2;if(W.sw){W.wu=(W.wu+dt*.04)%1;W.liC.getPointAt(W.wu,p);W.waste.position.copy(p);W.waste.scale.setScalar(.6+.8*W.wu)}
+if(W.view==='neph'||W.tw){const spawn=dt*26;for(let i=0;i<4;i++)if(Math.random()<spawn/4){const r=Math.random();const type=r<.22?'rbc':r<.32?'prot':r<.62?'water':r<.74?'sugar':r<.87?'salt':'urea';W.td.push({type,ph:'aff',u:0,off:new THREE.Vector3(rnd(-.05,.05),rnd(-.05,.05),rnd(-.05,.05))})}
+const reWater=.55+.4*(1-W.water);
+n=0;W.td=W.td.filter(o=>{const big=o.type==='rbc'||o.type==='prot';
+if(o.ph==='aff'){o.u+=dt*.5;if(o.u>=1){o.ph='glom';o.u=0}W.aff.getPointAt(Math.min(1,o.u),p)}
+else if(o.ph==='glom'){o.u+=dt*.35;if(!big&&o.u>.15&&o.u<.85&&Math.random()<dt*2.5){o.ph='cap';o.t=0;o.a=W.glom.getPointAt(o.u).clone();o.b=W.tub.getPointAt(0).clone()}if(o.u>=1){o.ph='peri';o.u=0}if(o.ph==='glom')W.glom.getPointAt(Math.min(1,o.u),p);else if(o.ph==='cap')p.copy(o.a);else W.peri.getPointAt(0,p)}
+else if(o.ph==='cap'){o.t+=dt*1.2;p.lerpVectors(o.a,o.b,sstep(0,1,o.t));if(o.t>=1){o.ph='tub';o.u=0;o.decide=o.type==='sugar'?rnd(.05,.3):o.type==='salt'?(Math.random()<.85?rnd(.1,.6):2):o.type==='water'?(Math.random()<reWater?rnd(.1,.95):2):o.type==='urea'?(Math.random()<.2?rnd(.3,.8):2):2}}
+else if(o.ph==='tub'){o.u+=dt*.07;if(o.u>=o.decide){o.ph='back';o.t=0;o.a=W.tub.getPointAt(Math.min(1,o.u)).clone();o.b=W.peri.getPointAt(clamp(o.u,.05,.95)).clone()}if(o.u>=1)return false;if(o.ph==='tub')W.tub.getPointAt(o.u,p);else p.copy(o.a)}
+else if(o.ph==='back'){o.t+=dt*1.5;p.lerpVectors(o.a,o.b,sstep(0,1,o.t));if(o.t>=1){o.ph='peri';o.u=clamp(W.tub.getPointAt(0).distanceTo(o.b)/30,0,.9)}}
+else if(o.ph==='peri'){o.u+=dt*.18;if(o.u>=1)return false;W.peri.getPointAt(o.u,p)}
+p.add(o.off);if(n<420){sc.setScalar(o.type==='rbc'?1.6:o.type==='prot'?1.25:o.type==='salt'?.65:.85);m.compose(p,q,sc);W.tp.setMatrixAt(n,m);W.tp.setColorAt(n,o.type==='urea'&&o.ph==='tub'&&o.u>.86?W.cols.urea:W.cols[o.type]);n++}sc.set(1,1,1);return true});W.tp.count=n;W.tp.instanceMatrix.needsUpdate=true;W.tp.instanceColor.needsUpdate=true}
+const showN=W.view==='neph'&&!W.tw;if(W.L){labPlace(W.L.n,v3(kidJ.gl).add(new THREE.Vector3(4.6,-2.4,0)),showN);labPlace(W.L.g,v3(kidJ.gl).add(new THREE.Vector3(-.4,-1.25,0)),showN);labPlace(W.L.t,v3(kidJ.gl).add(new THREE.Vector3(2.8,-3.2,0)),showN);labPlace(W.L.c,v3(kidJ.gl).add(new THREE.Vector3(5.9,-6.8,0)),showN)}
+setTxt('wtT',W.water<.25?'Not much':W.water<.7?'Some':'Lots');setBar('flB',W.fill,W.fill>.85?'#ff8a5c':'#ffd166');const cE=$('flC');if(cE)cE.style.background='#'+urineCol.getHexString();
+setTxt('flMsg',W.peeing?'Emptying the bladder.':W.fill>=1?'Your bladder is full. Stretch sensors in its wall are telling your brain it\'s time to go. Press "Use the bathroom".':W.water<.25?'Not enough water: your kidneys hold on to more water, so urine gets darker and there is less of it.':W.water>.7?'Lots of water: your kidneys let extra water go, so urine is pale and the bladder fills faster.':'')};
+return W}};
+TRIPS.stomachP=Object.assign({},TRIPS.stomach,{lesson:22,alias:'stomach',back:'proc:digest'});
+TRIPS.siP=Object.assign({},TRIPS.si,{lesson:22,alias:'si',back:'proc:digest'});
+TRIPS.liP=Object.assign({},TRIPS.li,{lesson:22,alias:'li',back:'proc:filter'});
 
 async function enterTrip(id){
 const def=TRIPS[id];if(!def)return;
