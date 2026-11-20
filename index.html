@@ -84,6 +84,7 @@ body.intrip #menu{display:none!important}
 #labTabs.tools button{border:1px solid var(--line);background:rgba(255,255,255,.07);padding:6px 11px}
 #labTabs.tools button.on{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
 #labTabs.tools button.hot{background:linear-gradient(135deg,#ffb347,#ff6f61);color:#1b1020;border:none}
+#labCard .stage{font-size:15px;line-height:1.5;padding:10px 12px;border-radius:12px;background:rgba(127,211,255,.08);border-left:3px solid #7fd3ff;margin-bottom:10px;min-height:66px}
 #labCard .ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:10px;border-radius:12px;background:rgba(255,255,255,.05);font-size:13px}
 #labCard .ctl input[type=range]{flex:1;min-width:140px;accent-color:#ffb347}
 #labCard .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -283,6 +284,7 @@ const LESSONS=[
 {n:13,q:"How does a healthy body use food for energy and growth, and how is M'Kenna's body functioning differently?",u:"Compare a healthy cell with one of M'Kenna's cells",h:'aa6422fe6de8bd3fe4b5b959d6077d5337f50be9f2fd3ca6542fa4ec3fd2ed4b',acts:[['trip:cellmk','Compare cells']]},
 {n:14,q:'Do all animals do chemical reactions to get energy from food like humans?',u:'Compare how different animals get energy',h:'4a9394a43c4ba6fdd31e3dd67b3377777ac7d36ab0a040d4f0895d7e31940837',acts:[['panel:animals','Animals']]},
 {n:16,badge:'🧠',label:'Bonus',q:'The brain',u:'A full 3D brain to explore, plus rides through its fluid-filled spaces and along a neuron',h:'6c2356e7e6138057f6229efa19c34b6fb0faad8dea703e7d1b38cff255eb4b8b',acts:[['brain','Brain explorer'],['trip:brainv','Fly inside'],['trip:neuron','Neurons']]},
+{n:21,badge:'🫁',label:'Staying alive',q:'Gas exchange and circulation',u:'How breathing and the heartbeat keep oxygen moving to every cell, all on their own',h:'04d492669f6293347b354b90ba1a0079733d18dc208d04d603052da841d21bb0',acts:[['proc:breathe','Breathing'],['proc:circ','Heartbeat and blood flow']]},
 {n:15,q:'What questions on our Driving Question Board can we now answer?',u:'Put the whole story together',h:'322473b732fdf88b5c2b037ce41771269a80b8cd75ebeff8bac6ffc17cf068eb',acts:[['panel:review','The big picture']]}
 ];
 const MASTER='ee85d756d03ff4f683e368a2b9b0b1fa0b94053f09f29f878f66c924f7ecf2bc';
@@ -366,11 +368,12 @@ function loadJSON(url){return fetch(url).then(r=>r.json())}
 function showLoading(t,p){$('loading').classList.remove('hidden');$('loadText').textContent=t;$('loadBar').style.width=Math.round((p||0)*100)+'%'}
 function hideLoading(){$('loading').classList.add('hidden')}
 
+const BODYG={};
 async function loadBody(){
 showLoading('Loading the 3D body',0);
 const g=await loadGLB('models/body.glb',p=>showLoading('Loading the 3D body',p));
 const list=[];g.scene.traverse(o=>{if(o.isMesh)list.push(o)});
-list.forEach(o=>{const id=o.name;scene.attach(o);
+list.forEach(o=>{const id=o.name;BODYG[id]=o.geometry;scene.attach(o);
 if(id==='body'){o.material=ghostMat;o.renderOrder=5;return}
 if(id==='skeleton'){o.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,transparent:true,opacity:.32,depthWrite:false});o.renderOrder=3;skeleton=o;return}
 const opts=id==='lungs'?{opacity:.86,roughness:.6,clearcoat:.2}:id==='liver'?{roughness:.45,clearcoat:.7}:{};
@@ -439,11 +442,12 @@ const acts=l.acts.map(a=>`<button class="hot" data-go="${a[0]}">${a[1]} ▶</but
 d.innerHTML=`<div class="num">${l.badge||l.n}</div><div class="t"><div class="q">${l.label?l.label+': '+l.q:'Lesson '+l.n+': '+l.q}</div><div class="u">${l.u}</div></div><div class="acts">${acts}</div>`;el.appendChild(d)});
 el.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{closeModal();goTo(b.dataset.go)});
 }
-function leaveNow(){if(lab&&lab===brainView){lab.savedCam=labCam.position.clone();lab.savedT=labControls.target.clone();$('tip').style.display='none';canvas.style.cursor=''}if(trip){if(trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;$('tripUI').classList.add('hidden')}if(lab){lab=null;labControls.enabled=false;$('labUI').classList.add('hidden');$('labLabels').innerHTML=''}document.body.classList.remove('intrip');controls.enabled=true}
+function leaveNow(){if(lab&&(lab===brainView||lab.keep)){lab.savedCam=labCam.position.clone();lab.savedT=labControls.target.clone();$('tip').style.display='none';canvas.style.cursor=''}if(trip){if(trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;$('tripUI').classList.add('hidden')}if(lab){lab=null;labControls.enabled=false;$('labUI').classList.add('hidden');$('labLabels').innerHTML=''}document.body.classList.remove('intrip');controls.enabled=true}
 function goTo(g){
 const [k,v]=g.split(':');
 if(k==='body'){leaveNow();updateBodyGate();return}
 if(k==='brain'){enterBrain();return}
+if(k==='proc'){enterProc(v);return}
 if(k==='trip'){if(lab)leaveNow();enterTrip(v);return}
 if(k==='lab'){enterLab(v);return}
 if(k==='panel'){openPanel(v);return}
@@ -456,7 +460,7 @@ $('lessonsBtn').onclick=()=>openModal();
 $('closeModal').onclick=closeModal;
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
 function submitCode(){const r=tryCode($('codeIn').value);const m=$('codeMsg');if(!r){m.textContent="That code didn't match any lesson. Check the spelling and try again.";m.className='bad';return}
-$('codeIn').value='';m.className='good';m.textContent=r==='all'?'Teacher code: every lesson is unlocked.':(r.badge?'Unlocked the brain!':`Unlocked Lesson ${r.n}!`);toast(r==='all'?'All lessons unlocked':(r.badge?'The brain is unlocked':`Lesson ${r.n} unlocked`));refreshLocks();if(trip)renderStop();$('closeModal').classList.toggle('hidden',modalLocked());updateBodyGate()}
+$('codeIn').value='';m.className='good';const nm=r==='all'?'':r.n===16?'the brain':r.n>20?r.q:'Lesson '+r.n;m.textContent=r==='all'?'Teacher code: every lesson is unlocked.':`Unlocked ${nm}!`;toast(r==='all'?'All lessons unlocked':`${nm.charAt(0).toUpperCase()+nm.slice(1)} unlocked`);refreshLocks();if(trip)renderStop();$('closeModal').classList.toggle('hidden',modalLocked());updateBodyGate()}
 $('codeBtn').onclick=submitCode;$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')submitCode()});
 $('lockAll').onclick=()=>$('lockConfirm').classList.remove('hidden');
 $('lockNo').onclick=()=>$('lockConfirm').classList.add('hidden');
@@ -1169,6 +1173,130 @@ T.rate+=((T.fired)-T.rate)*0;T.rateShown=(T.rateShown||1)+((rate)-(T.rateShown||
 hud(T){const r=Math.round((T.rateShown||1)*100);return `<b>How often signals fire</b><div class="meter"><div style="width:${r}%;background:linear-gradient(90deg,#ffd166,#fff3a0)"></div></div><div>${r>70?'Normal: lots of signals':"M'Kenna: fewer signals"}</div>`}
 };
 
+const PROCS={};let procCache={};
+function bodyPart(id,mat){const g=BODYG[id];if(!g)return null;return new THREE.Mesh(g,mat)}
+function procGhost(){const m=ghostMat.clone();m.uniforms.uMk={value:0};m.uniforms.c={value:new THREE.Color(0x8fb4ff)};return m}
+function faint(id,op){const m=bodyPart(id,orgMat({opacity:op||.16}));if(m){m.material.depthWrite=false;m.renderOrder=1}return m}
+function lineCurve(pts){return new THREE.CatmullRomCurve3(pts.map(v3))}
+function setTxt(id,t){const e=$(id);if(e&&e.textContent!==t)e.textContent=t}
+function setBar(id,v,col){const e=$(id);if(!e)return;e.style.width=Math.round(clamp(v,0,1)*100)+'%';if(col)e.style.background=col}
+async function enterProc(id){const P=PROCS[id];if(!P||!has(P.group))return;
+if(trip)leaveNow();if(lab)leaveNow();select(null);if(journey)stopJourney();$('panel').classList.add('hidden');$('modal').classList.add('hidden');$('labLabels').innerHTML='';
+try{await bodyP}catch(e){}if(!BODYG.body){toast('Could not load the body. Try refreshing.');return}
+const W=procCache[id]||(procCache[id]=P.build());W.id=id;lab=W;renderer.localClippingEnabled=false;
+document.body.classList.add('intrip');$('bodyUI').classList.add('hidden');$('labUI').classList.remove('hidden');$('tip').style.display='none';
+controls.enabled=false;labControls.enabled=true;labControls.minDistance=1.5;labControls.maxDistance=30;
+if(W.savedCam){labControls.target.copy(W.savedT);labCam.position.copy(W.savedCam)}else{labControls.target.set(...W.target);labCam.position.set(...W.cam)}
+labCam.lookAt(labControls.target);$('labTitle').textContent=P.title;W.onEnter&&W.onEnter();
+const T=$('labTabs');T.innerHTML='';T.classList.add('tools');T.classList.remove('hidden');(W.tools||[]).forEach(([k,label,fn,hot])=>{const b=document.createElement('button');b.textContent=label;b.dataset.t=k;if(hot)b.classList.add('hot');b.onclick=()=>{fn();W.sync&&W.sync();renderLabCard()};T.appendChild(b)});if(!(W.tools||[]).length)T.classList.add('hidden');W.sync&&W.sync();
+renderLabCard()}
+function camTo(W,pos,tgt){W.tw={t0:labControls.target.clone(),t1:v3(tgt),c0:labCam.position.clone(),c1:v3(pos),k:0}}
+function runTw(W,dt){if(!W.tw)return;W.tw.k=Math.min(1,W.tw.k+dt*1.4);const e=1-Math.pow(1-W.tw.k,3);labControls.target.lerpVectors(W.tw.t0,W.tw.t1,e);labCam.position.lerpVectors(W.tw.c0,W.tw.c1,e);if(W.tw.k>=1)W.tw=null}
+function rbcGeo(r){const prof=[];for(let i=0;i<=10;i++){const t=i/10;prof.push(new THREE.Vector2(r*t,r*.32*(1-t*t)*(.4+1.6*t*t)))}for(let i=10;i>=0;i--){const t=i/10;prof.push(new THREE.Vector2(r*t,-r*.32*(1-t*t)*(.4+1.6*t*t)))}return new THREE.LatheGeometry(prof,16)}
+
+PROCS.breathe={group:21,title:'Breathing',build(){
+const s=labScene(0x0b1024);const W={scene:s,keep:true,cam:innerWidth/innerHeight>1.1?[1.4,2.3,6.2]:[0,.6,11.5],target:innerWidth/innerHeight>1.1?[-.9,1.6,0]:[0,-.7,0],ph:0,b:0,rate:16,hold:false,co2:.35,o2:.97,view:'body',parts:[],last:0,phase:'in',count:0};
+s.add(bodyPart('body',procGhost()));
+const ribPivot=new THREE.Group();ribPivot.position.set(0,1.9,-.3);s.add(ribPivot);
+const sk=bodyPart('skeleton',new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,transparent:true,opacity:.55,depthWrite:false}));sk.position.set(0,-1.9,.3);sk.renderOrder=3;ribPivot.add(sk);
+const lungPivot=new THREE.Group();lungPivot.position.set(0,2.75,0);s.add(lungPivot);
+const lungs=bodyPart('lungs',orgMat({opacity:.85,roughness:.6,clearcoat:.2}));lungs.material.depthWrite=false;lungs.renderOrder=2;lungs.position.set(0,-2.75,0);lungPivot.add(lungs);
+{const tr=bodyPart('trachea',orgMat({opacity:.45}));tr.material.depthWrite=false;tr.renderOrder=3;s.add(tr)}s.add(bodyPart('heart',orgMat()));
+['liver','stomach','smallInt','largeInt','esophagus','vessels','pancreas'].forEach(id=>{const m=faint(id);if(m)s.add(m)});
+const dia=new THREE.Mesh(new THREE.SphereGeometry(1,48,24,0,Math.PI*2,0,1.25),new THREE.MeshPhysicalMaterial({color:0xd0606a,roughness:.5,clearcoat:.4,side:THREE.DoubleSide,transparent:true,opacity:.92}));
+dia.scale.set(1.42,.55,.92);dia.position.set(0,.5,-.02);s.add(dia);
+W.dia=dia;W.lungPivot=lungPivot;W.ribPivot=ribPivot;
+W.curves=[];for(let k=0;k<40;k++){const sg=k%2?1:-1;const dest=new THREE.Vector3(.98*sg+rnd(-.38,.38),1.75+rnd(-.65,.75),rnd(-.32,.32));W.curves.push(lineCurve([[0,4.75,1.6],[0,4.05,.62],[0,3.62,.3],[0,3.0,.2],[0,2.45,.1],[.45*sg,2.22,.08],[.82*sg,2.0,.05],[dest.x,dest.y,dest.z]]))}
+const pg=new THREE.SphereGeometry(.055,10,8);
+W.air=new THREE.InstancedMesh(pg,new THREE.MeshStandardMaterial({roughness:.3,emissive:0x333333}),220);for(let i=0;i<220;i++)W.air.setColorAt(i,new THREE.Color(1,1,1));W.air.count=0;W.air.renderOrder=4;s.add(W.air);W.ps=[];
+W.cO=new THREE.Color(0x63e8ff);W.cC=new THREE.Color(0xb8bec8);
+const Z=new THREE.Vector3(40,1.6,0);W.Z=Z;
+const alv=new THREE.Mesh(new THREE.SphereGeometry(2,48,32),new THREE.MeshPhysicalMaterial({color:0xf2a0b0,transparent:true,opacity:.35,roughness:.3,clearcoat:.8,side:THREE.DoubleSide,depthWrite:false}));alv.position.copy(Z);s.add(alv);W.alv=alv;
+const cpts=[];for(let i=0;i<=40;i++){const a=-1.3+i/40*2.6;cpts.push(new THREE.Vector3(Z.x+Math.sin(a)*2.32,Z.y-1.15+Math.cos(a*1.3)*.25,Z.z+Math.cos(a)*2.32))}
+W.cap=new THREE.CatmullRomCurve3(cpts);
+s.add(new THREE.Mesh(new THREE.TubeGeometry(W.cap,120,.32,16,false),new THREE.MeshPhysicalMaterial({color:0xb02038,transparent:true,opacity:.16,roughness:.3,depthWrite:false})));
+W.rbc=new THREE.InstancedMesh(rbcGeo(.24),new THREE.MeshStandardMaterial({roughness:.5}),14);for(let i=0;i<14;i++)W.rbc.setColorAt(i,new THREE.Color(0x6a1030));s.add(W.rbc);
+W.rd=[];for(let i=0;i<14;i++)W.rd.push({u:i/14,rot:rnd(0,6)});
+W.gas=new THREE.InstancedMesh(new THREE.SphereGeometry(.07,10,8),new THREE.MeshStandardMaterial({roughness:.3,emissive:0x222222}),120);for(let i=0;i<120;i++)W.gas.setColorAt(i,new THREE.Color(1,1,1));W.gas.count=0;s.add(W.gas);W.gd=[];
+W.onEnter=()=>{W.L={zoom:labLabel('Zoomed in: one air sac and a capillary')}};
+W.tools=[['view','Zoom into air sacs',()=>{W.view=W.view==='body'?'zoom':'body';if(W.view==='zoom')camTo(W,[Z.x+1.2,Z.y+1.2,Z.z+7.5],[Z.x-1.4,Z.y-.4,Z.z]);else camTo(W,W.cam,W.target)}],['hold','Hold your breath',()=>{if(!W.hold){W.hold=true;W.holdT=0;W.msg=''}else W.hold=false}],['in','Inside the lungs ▶',()=>enterTrip('lungsP'),true]];
+W.sync=()=>{const T=$('labTabs');T.querySelectorAll('button').forEach(b=>{if(b.dataset.t==='view'){b.textContent=W.view==='body'?'Zoom into air sacs':'Back to the body';b.classList.toggle('on',W.view==='zoom')}if(b.dataset.t==='hold'){b.textContent=W.hold?'Let go and breathe':'Hold your breath';b.classList.toggle('on',W.hold)}})};
+W.card=()=>{const zoom=W.view==='zoom';let h=`<div class="step">Gas exchange and circulation</div><h3>${zoom?'Gas exchange':'Breathing'}</h3>`;
+h+=`<div class="ctl"><b>Breathing speed</b><input type="range" id="brRate" min="12" max="44" value="${W.rate}"><span id="brRateT" class="small"></span></div>`;
+h+=`<div class="stage" id="brStage"></div>`;
+h+=`<div class="bars"><span>Air in lungs</span><div class="bar"><div id="bLung"></div></div><span>Oxygen in blood</span><div class="bar"><div id="bO2"></div></div><span>Carbon dioxide</span><div class="bar"><div id="bCO2"></div></div>${W.hold?'<span>Urge to breathe</span><div class="bar"><div id="bUrge"></div></div>':''}</div>`;
+h+=zoom?`<p>Each air sac (alveolus) is wrapped in tiny blood vessels called capillaries. Their walls are thinner than a sheet of paper, so oxygen (blue) slips from the air into red blood cells, turning them bright red, while carbon dioxide (gray) leaves the blood to be breathed out.</p><p class="small">⭐ Your lungs have hundreds of millions of air sacs. Spread flat, they would cover about half a tennis court.</p>`:`<p class="small">⭐ You breathe about 20,000 times a day without thinking about it. Your brainstem runs it automatically, mostly by checking how much carbon dioxide is in your blood. Try holding your breath to see it take over.</p>`;
+h+=`<div id="brMsg" class="mk ${W.msg?'':'hidden'}"><b>Automatic control</b><p id="brMsgT">${W.msg||''}</p></div>`;
+return h};
+W.bind=()=>{const r=$('brRate');if(r)r.oninput=()=>{W.rate=+r.value}};
+W.update=(dt,time)=>{runTw(W,dt);
+const cyc=60/W.rate;let prevB=W.b;
+if(!W.hold){W.ph=(W.ph+dt/cyc)%1;const ins=.42;W.b=W.ph<ins?.5-.5*Math.cos(Math.PI*W.ph/ins):.5+.5*Math.cos(Math.PI*(W.ph-ins)/(1-ins));const ph=W.ph<ins?'in':'out';if(ph!==W.phase){W.phase=ph;if(ph==='in')W.count++}
+W.co2=Math.max(.32,W.co2-dt*.12);W.o2=Math.min(.98,W.o2+dt*.05)}
+else{W.holdT+=dt;W.co2=Math.min(1,W.co2+dt*.055);W.o2=Math.max(.86,W.o2-dt*.008);if(W.co2>=.97){W.hold=false;W.msg='Your brainstem noticed carbon dioxide building up and forced you to breathe. You can hold your breath for a while, but breathing always takes over in the end.';W.sync();renderLabCard()}}
+const b=W.b,deep=.65+.35*clamp((W.rate-12)/30,0,1);const bb=b*deep;
+W.dia.position.y=.5-.2*bb;W.dia.scale.y=.55-.14*bb;W.lungPivot.scale.set(1+.07*bb,1+.14*bb,1+.11*bb);W.ribPivot.rotation.x=-.06*bb;W.ribPivot.scale.set(1+.04*bb,1,1+.05*bb);
+const inh=!W.hold&&W.phase==='in',exh=!W.hold&&W.phase==='out';
+const spawn=dt*W.rate*1.6*deep;
+if(inh&&Math.random()<spawn*4)W.ps.push({c:W.curves[Math.floor(Math.random()*W.curves.length)],u:0,d:1,o2:true});
+if(exh&&Math.random()<spawn*4)W.ps.push({c:W.curves[Math.floor(Math.random()*W.curves.length)],u:1,d:-1,o2:false});
+const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();let n=0;
+const sp=1/(cyc*.42);
+W.ps=W.ps.filter(o=>{if(!W.hold)o.u+=o.d*dt*sp*(o.d>0?1:.75);if(o.u>1||o.u<0)return false;if(n<220){o.c.getPointAt(o.u,p);m.compose(p,q,sc);W.air.setMatrixAt(n,m);W.air.setColorAt(n,o.o2?W.cO:W.cC);n++}return true});
+W.air.count=n;W.air.instanceMatrix.needsUpdate=true;if(W.air.instanceColor)W.air.instanceColor.needsUpdate=true;
+if(W.view==='zoom'||W.tw){const dark=new THREE.Color(0x5a1030),bright=new THREE.Color(0xe0182c),c=new THREE.Color(),e=new THREE.Euler();W.rd.forEach((o,i)=>{o.u=(o.u+dt*.06)%1;W.cap.getPointAt(o.u,p);o.rot+=dt;e.set(o.rot,o.rot*.6,0);q.setFromEuler(e);sc.setScalar(1);m.compose(p,q,sc);W.rbc.setMatrixAt(i,m);c.copy(dark).lerp(bright,sstep(.25,.6,o.u));W.rbc.setColorAt(i,c)});W.rbc.instanceMatrix.needsUpdate=true;W.rbc.instanceColor.needsUpdate=true;
+if(Math.random()<dt*10){const o2=Math.random()<.55;const i=Math.floor(Math.random()*14);const tgt=W.cap.getPointAt(W.rd[i].u);const st=W.Z.clone().add(new THREE.Vector3(rnd(-1,1),rnd(-.5,1),rnd(-1,1)));W.gd.push(o2?{a:st,b:tgt,t:0,o2}:{a:tgt,b:st,t:0,o2})}
+q.identity();let k=0;W.gd=W.gd.filter(o=>{o.t+=dt*.55;if(o.t>1)return false;p.lerpVectors(o.a,o.b,sstep(0,1,o.t));sc.setScalar(Math.sin(o.t*Math.PI)*.8+.2);m.compose(p,q,sc);W.gas.setMatrixAt(k,m);W.gas.setColorAt(k,o.o2?W.cO:W.cC);k++;return k<120});W.gas.count=k;W.gas.instanceMatrix.needsUpdate=true;if(W.gas.instanceColor)W.gas.instanceColor.needsUpdate=true}
+labPlace(W.L.zoom,W.Z.clone().add(new THREE.Vector3(0,2.25,0)),W.view==='zoom'&&!W.tw);
+setTxt('brRateT',`${Math.round(W.rate)} breaths a minute${W.rate>30?' (exercising)':W.rate<18?' (resting)':''}`);
+const st=W.hold?'Holding your breath: no air moves in or out. Carbon dioxide is building up in your blood.':W.phase==='in'?'Breathing in: the diaphragm (the red dome) tightens and pulls down, and muscles lift the ribs up and out. The chest gets bigger, so air rushes in.':'Breathing out: the diaphragm relaxes and moves back up. The chest gets smaller and squeezes the used air out.';
+setTxt('brStage',st);setBar('bLung',.15+.85*bb,'#7fd3ff');setBar('bO2',(W.o2-.8)/.2,W.o2>.93?'#6ee7b0':'#ffd166');setBar('bCO2',W.co2,W.co2>.7?'#ff8a5c':'#c8d0dc');setBar('bUrge',(W.co2-.35)/.62,'#ff6f61')};
+return W}};
+
+PROCS.circ={group:21,title:'Heartbeat and blood flow',build(){
+const s=labScene(0x0b1024);const W={scene:s,keep:true,cam:innerWidth/innerHeight>1.1?[2.4,.6,9.5]:[0,0,13.5],target:innerWidth/innerHeight>1.1?[-1.3,-.2,0]:[0,-.6,0],hr:72,beatT:0,beats:0,loop:'both',beatPh:1,ecg:[]};
+s.add(bodyPart('body',procGhost()));
+const hp=new THREE.Group();hp.position.set(.28,1.4,.42);s.add(hp);const heart=bodyPart('heart',orgMat());heart.position.set(-.28,-1.4,-.42);hp.add(heart);W.hp=hp;
+s.add(bodyPart('vessels',orgMat({opacity:.55})));const vm=s.children[s.children.length-1];vm.material.depthWrite=false;vm.renderOrder=1;
+['lungs','liver','stomach','smallInt','largeInt','esophagus','trachea','pancreas'].forEach(id=>{const m=faint(id,id==='lungs'?.22:.14);if(m)s.add(m)});
+const sa=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),blending:THREE.AdditiveBlending,depthTest:false,transparent:true,color:0xfff0a0}));sa.position.set(.05,1.66,.5);sa.scale.setScalar(.01);sa.renderOrder=9;s.add(sa);W.sa=sa;
+const lungLoop=sg=>[[.3,1.25,.5],[.32,1.62,.52],[.38,1.92,.5],[.32,2.0,.42],[.6*sg+.2,2.05,.2],[.98*sg,2.0,.05],[.98*sg+.2*sg,1.7,0],[.98*sg,1.45,.05],[.98*sg,1.95,0],[.6*sg+.2,1.85,.05],[.35,1.7,.2],[.36,1.5,.35],[.4,1.25,.42]];
+const aorta=[[.4,1.25,.42],[.22,1.6,.38],[.24,2.0,.38],[.18,2.3,.22]];
+const desc=[[.02,2.36,-.05],[-.08,2.18,-.3],[-.06,1.2,-.55],[-.02,0,-.5]];
+const cavaTop=[[-.3,.4,-.2],[-.22,1.3,.25],[0,1.55,.4],[.15,1.4,.48]];
+const svc=[[-.06,2.3,.32],[-.02,1.65,.38],[.15,1.45,.48]];
+const bodyRoutes=[];
+[1,-1].forEach(sg=>{bodyRoutes.push({pts:[...aorta,...desc,[0,-1.2,-.42],[0,-2.3,-.38],[.3*sg,-2.7,-.2],[.6*sg,-3.3,0],[.72*sg,-4.4,.05],[.7*sg,-4.75,.1],[.66*sg-.05,-4.4,.12],[.6*sg-.1,-3.3,.05],[.25*sg-.25,-2.75,-.15],[-.25,-2.4,-.25],[-.28,-1.0,-.3],...cavaTop],cap:.48,w:2});
+bodyRoutes.push({pts:[...aorta,[.06*sg,2.38,.05],[.9*sg,2.85,0],[1.9*sg,2.6,0],[2.36*sg,.8,.02],[2.64*sg,-1.1,.18],[2.7*sg,-1.35,.25],[2.6*sg,-1.1,.08],[2.3*sg,.8,-.06],[1.86*sg,2.55,-.08],[.9*sg,2.75,-.08],[-.06,2.3,.32],...svc.slice(1)],cap:.5,w:1})});
+bodyRoutes.push({pts:[...aorta,[.12,2.32,.15],[.14,3.0,.15],[.16,3.7,.2],[.05,4.2,.2],[-.15,3.7,.2],[-.08,2.9,.2],...svc],cap:.5,w:1.4});
+bodyRoutes.push({pts:[...aorta,...desc.slice(0,3),[0,-.6,-.46],[0,-.75,-.1],[0,-1.0,.05],[.3,-1.35,.3],[0,-1.15,.12],[-.25,-.5,.2],[-.5,.2,.25],[-.68,.45,.22],[-.65,.6,.2],[-.32,.75,-.1],[-.25,1.0,0],[-.22,1.3,.25],[0,1.55,.4],[.15,1.4,.48]],cap:.4,w:1.6});
+W.lungC=[1,-1].map(sg=>({c:lineCurve(lungLoop(sg)),cap:.45}));W.bodyC=bodyRoutes.map(r=>({c:lineCurve(r.pts),cap:r.cap,w:r.w}));
+const tw=W.bodyC.reduce((a,r)=>a+r.w,0);W.pickBody=()=>{let x=Math.random()*tw;for(const r of W.bodyC){x-=r.w;if(x<=0)return r}return W.bodyC[0]};
+W.cells=new THREE.InstancedMesh(new THREE.SphereGeometry(.045,8,6),new THREE.MeshStandardMaterial({roughness:.35,emissive:0x220000}),300);for(let i=0;i<300;i++)W.cells.setColorAt(i,new THREE.Color(1,1,1));W.cells.renderOrder=4;s.add(W.cells);
+W.cd=[];for(let i=0;i<300;i++){const lung=i%3===0;const R=lung?W.lungC[i%2]:W.pickBody();W.cd.push({lung,R,u:Math.random()})}
+W.cR=new THREE.Color(0xff3347);W.cB=new THREE.Color(0x5a6cff);
+W.tools=[['lp','Lung loop',()=>{W.loop=W.loop==='lung'?'both':'lung'}],['bl','Body loop',()=>{W.loop=W.loop==='body'?'both':'body'}],['in','Inside the heart ▶',()=>enterTrip('heartP'),true]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{if(b.dataset.t==='lp')b.classList.toggle('on',W.loop==='lung');if(b.dataset.t==='bl')b.classList.toggle('on',W.loop==='body')})};
+W.card=()=>{let h=`<div class="step">Gas exchange and circulation</div><h3>Heartbeat and blood flow</h3>`;
+h+=`<div class="ctl"><b>Heart rate</b><input type="range" id="hrR" min="55" max="180" value="${W.hr}"><span id="hrT" class="small"></span></div>`;
+h+=`<canvas id="ecg" width="420" height="64" style="width:100%;height:64px;display:block;border-radius:10px;background:rgba(0,0,0,.25);margin-bottom:10px"></canvas>`;
+h+=W.loop==='lung'?`<p><b>The lung loop.</b> The right side of the heart pumps used blood (blue) to the lungs. It drops off carbon dioxide, picks up oxygen and comes back bright red to the left side.</p>`:W.loop==='body'?`<p><b>The body loop.</b> The left side pumps oxygen-rich blood (red) out through the aorta to every part of the body. In tiny capillaries it hands oxygen and food to cells and picks up waste, then returns (blue) to the right side.</p>`:`<p>Your heart is really two pumps side by side. The right side sends blood to the lungs to pick up oxygen. The left side sends that oxygen-rich blood to the whole body. Then it comes back and starts again.</p>`;
+h+=`<p class="small">⭐ A spot in the heart called the pacemaker (the glowing flash) sends an electric signal before every beat, so the heart beats on its own. When you exercise, your brain and hormones speed it up so muscles get more oxygen.</p><div class="bars"><span>Heartbeats</span><div id="hbN" class="small"></div><span>Blood pumped</span><div id="hbL" class="small"></div></div><p class="small">Blue just marks blood with less oxygen. Real blood is always red.</p>`;return h};
+W.bind=()=>{const r=$('hrR');if(r)r.oninput=()=>{W.hr=+r.value}};
+W.update=(dt,time)=>{runTw(W,dt);
+const per=60/W.hr;W.beatT+=dt;if(W.beatT>=per){W.beatT-=per;W.beats++;W.beatPh=0}W.beatPh+=dt/Math.min(per,.8);
+const k=W.beatPh<1?Math.sin(Math.min(1,W.beatPh*2.2)*Math.PI):0;W.hp.scale.setScalar(1-.07*k);W.sa.scale.setScalar(W.beatPh<.25?.5*(1-W.beatPh*4)+.01:.01);
+const sp=W.hr/72*.07,m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+W.cd.forEach((o,i)=>{o.u+=dt*sp*(.6+.8*k);if(o.u>=1){o.u-=1;if(o.lung){o.lung=false;o.R=W.pickBody()}else{o.lung=true;o.R=W.lungC[Math.random()<.5?0:1]}}
+const show=W.loop==='both'||(W.loop==='lung')===o.lung;o.R.c.getPointAt(o.u,p);sc.setScalar(show?1:0);m.compose(p,q,sc);W.cells.setMatrixAt(i,m);
+const red=o.lung?o.u>o.R.cap:o.u<o.R.cap;W.cells.setColorAt(i,red?W.cR:W.cB)});W.cells.instanceMatrix.needsUpdate=true;W.cells.instanceColor.needsUpdate=true;
+setTxt('hrT',`${Math.round(W.hr)} beats a minute${W.hr>120?' (exercising hard)':W.hr<90?' (resting)':' (moving)'}`);setTxt('hbN',String(W.beats));setTxt('hbL',(W.beats*.07).toFixed(1)+' liters');
+const cv=$('ecg');if(cv){const x=cv.getContext('2d');W.ecg.push(ecgVal(W.beatT/per,per));while(W.ecg.length>cv.width)W.ecg.shift();x.clearRect(0,0,cv.width,cv.height);x.strokeStyle='#6ee7b0';x.lineWidth=2;x.beginPath();W.ecg.forEach((v,j)=>{const xx=cv.width-W.ecg.length+j,yy=cv.height*.62-v*cv.height*.5;j?x.lineTo(xx,yy):x.moveTo(xx,yy)});x.stroke()}};
+return W}};
+function ecgVal(t,per){const s=t*per;const g=(c,w,a)=>a*Math.exp(-Math.pow((s-c)/w,2));return g(.08,.025,.12)+g(.2,.008,-.12)+g(.22,.01,1)+g(.24,.009,-.25)+g(.42,.05,.25)}
+TRIPS.lungsP=Object.assign({},TRIPS.lungs,{lesson:21,alias:'lungs',back:'proc:breathe'});
+TRIPS.heartP=Object.assign({},TRIPS.heart,{lesson:21,alias:'heart',back:'proc:circ'});
+
 async function enterTrip(id){
 const def=TRIPS[id];if(!def)return;
 if(!has(def.lesson))return;if(lab)leaveNow();$('panel').classList.add('hidden');$('modal').classList.add('hidden');
@@ -1179,7 +1307,7 @@ let T=tripCache[key];
 if(!T){try{showLoading('Loading '+base.title.toLowerCase(),0);const [g,d]=await Promise.all([loadGLB('models/'+base.file+'.glb',p=>showLoading('Loading '+base.title.toLowerCase(),p)),loadJSON('models/'+base.file+'.json')]);T=base.build(g,d);tripCache[key]=T}catch(err){hideLoading();$('fade').style.opacity=0;toast('Could not load that part. Try again.');console.error(err);return}hideLoading()}
 T.scene.add(tripCam);tripLight.intensity=1.5;document.body.classList.add('intrip');
 if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));
-trip={id:key,def:base,T,S:T.stops.filter(x=>!x.lesson||has(x.lesson)),seg:0,u:.004,goal:null,stopIdx:-1,yaw:0,pitch:0,focus:0,up:new THREE.Vector3(0,1,0),len(){return this.T.curves[this.seg].len}};
+trip={id:key,back:def.back||base.back,def:base,T,S:T.stops.filter(x=>!x.lesson||has(x.lesson)),seg:0,u:.004,goal:null,stopIdx:-1,yaw:0,pitch:0,focus:0,up:new THREE.Vector3(0,1,0),len(){return this.T.curves[this.seg].len}};
 let startIdx=def.startStop?Math.max(0,trip.S.findIndex(x=>x.id===def.startStop)):0;const st=trip.S[startIdx];if(def.setMk&&mkAllowed())setMode('mk');trip.seg=st.seg||0;trip.u=Math.max(.004,st.u-.02);
 $('bodyUI').classList.add('hidden');$('tripUI').classList.remove('hidden');$('tip').style.display='none';
 $('tripTitle').textContent=base.title;$('tripMode').classList.toggle('hidden',!mkAllowed());
@@ -1189,7 +1317,7 @@ setTimeout(()=>$('fade').style.opacity=0,80);
 }
 function exitTrip(silent){
 if(!trip)return;$('fade').style.opacity=1;
-const back=trip.def.back;setTimeout(()=>{if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;document.body.classList.remove('intrip');$('tripUI').classList.add('hidden');controls.enabled=true;if(back==='brain'&&!silent){enterBrain();$('fade').style.opacity=0;return}updateBodyGate();$('fade').style.opacity=0;if(!canBody()&&!silent)openModal()},300)}
+const back=trip.back;setTimeout(()=>{if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;document.body.classList.remove('intrip');$('tripUI').classList.add('hidden');controls.enabled=true;if(back&&!silent){if(back==='brain')enterBrain();else if(back.startsWith('proc:'))enterProc(back.slice(5));$('fade').style.opacity=0;return}updateBodyGate();$('fade').style.opacity=0;if(!canBody()&&!silent)openModal()},300)}
 $('exitTrip').onclick=()=>exitTrip();
 $('tripNext').onclick=()=>{const n=trip&&trip.def.next;if(!n||!has(TRIPS[n].lesson))return;const go=n;$('fade').style.opacity=1;setTimeout(()=>{if(trip&&trip.markers)trip.markers.forEach(m=>m.parent&&m.parent.remove(m));trip=null;enterTrip(go)},300)};
 function buildMarkers(){const T=trip.T;trip.markers=trip.S.map((s,i)=>{const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:markerTex(i+1),depthTest:false,transparent:true}));sp.position.copy(s.mark);sp.scale.setScalar(.42);sp.renderOrder=10;sp.userData.stop=i;T.scene.add(sp);return sp})}
@@ -1266,7 +1394,7 @@ renderer.render(scene,camera);
 }
 window.__mk={enterTrip,goStop,setMode,tryCode,get trip(){return trip},get lab(){return lab},exitTrip,enterLab,openPanel,goTo,exitLab};
 refreshLocks();updateBodyGate();
-loadBody().catch(e=>{console.error(e);showLoading('Could not load the 3D models. Try refreshing the page.',0)});
+const bodyP=loadBody().catch(e=>{console.error(e);showLoading('Could not load the 3D models. Try refreshing the page.',0)});
 loop();
 </script>
 </body>
