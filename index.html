@@ -88,6 +88,8 @@ body.intrip #menu{display:none!important}
 #labCard .foods{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 #labCard .foods button{display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:12px;padding:8px 4px;font-size:12px}
 #labCard .foods button span{font-size:24px}
+#labCard .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+#labCard .tags span{font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;background:rgba(255,111,97,.14);border:1px solid rgba(255,111,97,.4)}
 #labCard .btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 #labCard .rt{display:flex;align-items:center;justify-content:center;text-align:center;min-height:70px;padding:10px;border-radius:14px;margin:4px 0 8px;font-weight:800;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:rgba(127,211,255,.12);border:1px solid rgba(127,211,255,.35)}
 #labCard .rt.wait{background:#7a1f2b;border-color:#c04050}
@@ -299,6 +301,7 @@ const LESSONS=[
 {n:22,badge:'🍎',label:'Staying alive',q:'Fuel and waste',u:'How food becomes fuel for your cells, and how your body cleans out what it doesn\'t need',h:'4f2d0e54a6febf3bc356fbd27ab1b6462814d12b344a0c8625565470cb9cf30a',acts:[['proc:digest','Digestion and absorption'],['proc:filter','Filtering and waste']]},
 {n:23,badge:'🛡️',label:'Staying alive',q:'Balance and protection',u:'How your body keeps its temperature steady, fights off germs and repairs itself',h:'e57f43bbea461b9b3f3f94848a3bd844e1d16635937724ab686c9f9a00deb000',acts:[['proc:temp','Body temperature'],['proc:immune','Fighting germs'],['proc:heal','Healing and clotting']]},
 {n:24,badge:'⚡',label:'Staying alive',q:'Control, senses and movement',u:'How your nerves sense the world and react, how muscles move your bones, and how hormones send messages',h:'e4dbebf320678e4f50d63d59fe9fd5892ea813965bb93ad9c816b06e0c810617',acts:[['proc:senses','Senses and reflexes'],['proc:move','Muscles and movement'],['proc:horm','Hormones and growth']]},
+{n:30,badge:'🩺',label:'Teacher only',q:'Other bodies',u:'Compare M\'Kenna\'s body with other diseases: cancers, diabetes, asthma, heart disease and lactose intolerance',h:'',acts:[['proc:dz','Explore other bodies']]},
 {n:15,q:'What questions on our Driving Question Board can we now answer?',u:'Put the whole story together',h:'322473b732fdf88b5c2b037ce41771269a80b8cd75ebeff8bac6ffc17cf068eb',acts:[['panel:review','The big picture']]}
 ];
 const MASTER='ee85d756d03ff4f683e368a2b9b0b1fa0b94053f09f29f878f66c924f7ecf2bc';
@@ -1748,6 +1751,183 @@ s.background.setRGB(.043*(1-.6*mel),.063*(1-.6*mel),.14*(1-.5*mel));hrB=72-14*me
 setTxt('hmStage',mel<.1?(W.hour<12?'Morning light stops melatonin. You wake up and feel alert.':'Daytime: melatonin is low and you feel awake. Light hitting your eyes tells your brain it is day.'):gh>.5?'Deep sleep: the pituitary releases big pulses of growth hormone. Your body grows, repairs muscles and builds bone while you sleep.':x<3?'It is getting dark. The pineal gland releases melatonin, a hormone that makes you feel sleepy. Your heart and breathing slow down.':'Still asleep. Melatonin stays high through the night, then drops as morning comes.')}else{s.background.setRGB(.043,.063,.14)}
 W.beat+=dt*hrB/60;const bp=Math.pow(Math.max(0,Math.sin(W.beat*Math.PI*2)),6);hp.scale.setScalar(1+.07*bp);W.breath+=dt*brB/60;lp.scale.setScalar(1+.035*Math.sin(W.breath*Math.PI*2));
 if(W.L)W.L.forEach(l=>labPlace(l.el,bodyG.localToWorld(l.p.clone()),!W.tw))};
+return W}};
+
+const DZ={
+celiac:{e:'🌾',name:'Celiac disease',sub:"This is M'Kenna's body",short:'celiac disease',organs:['smallInt'],lab:'Small intestine',ci:'villi',inside:'the small intestine',
+what:['The small intestine is lined with millions of tiny finger-shaped villi. They give it a huge surface area, so lots of food molecules can pass into the blood.','When someone with celiac disease eats gluten (a protein in wheat, barley and rye), their immune system attacks the lining of the small intestine by mistake. The villi wear down until they are short and flat, so far fewer food molecules get absorbed. Cells all over the body get less fuel and fewer building blocks.'],
+sym:['Stomach pain','Diarrhea','Gas and bloating','Weight loss','Feeling tired','Growing slowly'],cmp:"This is M'Kenna's condition. All of her symptoms trace back to one problem: a flattened small intestine lining that can't absorb enough food molecules."},
+lactose:{e:'🥛',name:'Lactose intolerance',short:'lactose intolerance',organs:['smallInt','largeInt'],lab:'Small and large intestine',ci:'lactose',inside:'the small intestine',
+what:['Milk has a sugar called lactose. It is too big to be absorbed, so an enzyme called lactase, made by cells on the villi, splits it into two smaller sugars that can pass into the blood.','Without enough lactase, lactose is not split. It moves on to the large intestine, where bacteria feed on it and make gas. That causes bloating, cramps and diarrhea after eating dairy.'],
+sym:['Bloating','Gas','Stomach cramps','Diarrhea after dairy'],cmp:"Like M'Kenna, the trouble shows up in the gut after eating certain foods. But here the villi are healthy: just one enzyme is missing, so the rest of the food is absorbed normally and there is no weight loss."},
+colon:{e:'🎗️',name:'Colon cancer',short:'colon cancer',organs:['largeInt'],lab:'Large intestine (colon)',ci:'colon',inside:'the colon wall',
+what:['Cells lining the large intestine are replaced all the time. Old cells fall off and new ones divide to take their place, in a careful, controlled way.','Cancer starts when a cell\'s instructions (its DNA) get damaged and it starts dividing out of control. In the colon this often begins as a small bump called a polyp. Over years it can grow into a tumor that blocks the intestine, and cancer cells can break off and spread through the blood.'],
+sym:['Blood in poop','Changes in bathroom habits','Stomach pain','Feeling tired','Weight loss'],cmp:"Both affect the digestive system and can cause tiredness and weight loss. But M'Kenna's lining is damaged by her immune system, while in cancer the body's own cells grow out of control."},
+lung:{e:'🫁',name:'Lung cancer',short:'lung cancer',organs:['lungs'],lab:'Lungs',ci:'airtree',inside:'the airways',
+what:['Air travels down branching tubes into millions of tiny air sacs called alveoli. There, oxygen moves into the blood and carbon dioxide moves out.','Lung cancer is lung cells dividing out of control and forming a tumor. Smoking is the biggest cause: chemicals in smoke damage the cells\' DNA and leave dark tar in the lungs. A tumor can block an airway so air can\'t reach some air sacs, and less oxygen gets into the blood.'],
+sym:['A cough that won\'t go away','Coughing up blood','Short of breath','Chest pain','Feeling tired','Weight loss'],cmp:"M'Kenna's cells are short on food molecules. Here cells can end up short on oxygen. Cells need both glucose and oxygen to release energy."},
+leuk:{e:'🩸',name:'Leukemia',sub:'A cancer of the blood',short:'leukemia',organs:['skeleton','vessels'],lab:'Bone marrow and blood',ci:'blood',inside:'a blood vessel',
+what:['Bone marrow, the soft middle of some bones, makes red blood cells (carry oxygen), white blood cells (fight germs) and platelets (help blood clot), each in the right amount.','In leukemia, the blood-making cells in the marrow go wrong and pump out huge numbers of abnormal white blood cells that don\'t work. They crowd out the healthy cells, so there are fewer red blood cells, working white blood cells and platelets.'],
+sym:['Tired and pale','Getting sick often','Bruising and bleeding easily','Fevers','Bone pain'],cmp:"M'Kenna is tired because her cells get less food. With leukemia, people are tired because there are fewer red blood cells to carry oxygen to their cells."},
+t1d:{e:'💉',name:'Type 1 diabetes',short:'type 1 diabetes',organs:['pancreas'],lab:'Pancreas',ci:'insulin',inside:'a body cell',
+what:['After you eat, glucose from your food goes into the blood. The pancreas releases insulin, which works like a key that opens doors on your cells so glucose can get in and be used for energy.','In type 1 diabetes, the immune system destroys the insulin-making cells in the pancreas by mistake. Without insulin, the doors stay shut. Glucose piles up in the blood while the cells run out of fuel.'],
+sym:['Very thirsty','Peeing a lot','Very hungry','Weight loss','Feeling tired','Blurry vision'],cmp:"Very close to M'Kenna: in both, cells don't get enough fuel, and both are caused by the immune system attacking the body by mistake. But M'Kenna's glucose never gets into her blood, while with type 1 diabetes there's plenty in the blood. It just can't get into the cells."},
+asthma:{e:'🌬️',name:'Asthma',short:'an asthma attack',organs:['lungs','trachea'],lab:'Airways',ci:'airway',inside:'an airway',
+what:['Airways are open tubes. A ring of muscle wraps around each one, and a thin layer of mucus inside catches dust and germs.','During an asthma attack, a trigger like pollen, smoke, cold air or exercise makes the airway walls swell, the muscles squeeze tight and extra mucus build up. The airways get narrow, so it\'s hard to move air in and out.'],
+sym:['Wheezing','Coughing','Tight chest','Short of breath'],cmp:"Asthma affects getting oxygen in, not getting food in. But cells need both oxygen and food molecules to release energy, so both can leave a person feeling tired and weak."},
+heart:{e:'❤️',name:'Heart disease',sub:'Clogged arteries and heart attacks',short:'heart disease',organs:['heart'],lab:'Heart',ci:'artery',inside:'a heart artery',
+what:['The heart muscle gets its own blood through the coronary arteries. They bring oxygen and glucose to the heart\'s hard-working cells.','Over many years, fatty plaque can build up inside the arteries, making them narrow. If a blood clot forms on the plaque, it can block the artery completely. The heart muscle past the block gets no oxygen and starts to die. That is a heart attack.'],
+sym:['Chest pain or pressure','Short of breath','Pain in the arm, jaw or back','Sweating','Feeling sick or dizzy'],cmp:"Heart cells need a steady supply of oxygen and glucose, like every cell. In M'Kenna's case the fuel isn't absorbed. Here, the blood carrying it can't get through."}};
+
+const DZCI={};
+DZCI.villi=(C,lact)=>{const g=new THREE.Group();g.position.copy(C);const S={g,h:1,abs:0,tot:0,ps:[],gas:[]};
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(9.5,5.6,40,24),new THREE.MeshStandardMaterial({color:LC('#e07f7c'),roughness:.6,side:THREE.DoubleSide}));wall.rotation.x=-Math.PI/2;g.add(wall);
+const prof=[[.19,0],[.16,.08],[.145,.6],[.14,.85],[.11,.95],[.06,.995],[0,1]].map(a=>new THREE.Vector2(a[0],a[1]));const vg=new THREE.LatheGeometry(prof,14);
+const V=[];for(let i=0;i<15;i++)for(let j=0;j<8;j++)V.push({x:-4.2+i*.6+rnd(-.12,.12),z:-2.2+j*.6+rnd(-.12,.12),k:rnd(.85,1.15)});S.V=V;
+S.vm=new THREE.InstancedMesh(vg,new THREE.MeshStandardMaterial({color:LC('#f3a5a2'),roughness:.45}),V.length);g.add(S.vm);
+S.enz=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.07,1),new THREE.MeshStandardMaterial({color:LC('#5fe08a'),emissive:LC('#0a4020')}),V.length);S.enz.visible=!!lact;g.add(S.enz);
+S.pm=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.08,1),new THREE.MeshBasicMaterial(),300);for(let i=0;i<300;i++)S.pm.setColorAt(i,new THREE.Color(1,1,1));S.pm.count=0;S.pm.frustumCulled=false;g.add(S.pm);
+const Y=LC('#ffd34d'),O=LC('#ff9a3c'),P=LC('#ffffff'),GA=LC('#9dffb5');
+S.update=(dt,t,sick)=>{const hT=lact?1:(sick?.13:1);S.h+=(hT-S.h)*Math.min(1,dt*1.2);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+V.forEach((v,i)=>{const hh=1.35*v.k*S.h;const w=1+(1-S.h)*.6;sc.set(w,hh,w);p.set(v.x,0,v.z);m.compose(p,q,sc);S.vm.setMatrixAt(i,m);sc.setScalar(lact&&!sick?1:0);p.set(v.x+.05,hh+.02,v.z);m.compose(p,q,sc);S.enz.setMatrixAt(i,m)});S.vm.instanceMatrix.needsUpdate=true;S.enz.instanceMatrix.needsUpdate=true;
+if(Math.random()<dt*7)S.ps.push({p:new THREE.Vector3(rnd(-4.3,3),3.2,rnd(-2.3,2.3)),v:rnd(.6,.9),st:0,t:0});
+const top=1.35*S.h;let n=0;const put=(pp,c,s)=>{if(n<300){sc.setScalar(s);m.compose(pp,q,sc);S.pm.setMatrixAt(n,m);S.pm.setColorAt(n,c);n++}};
+S.ps=S.ps.filter(o=>{o.t+=dt;if(o.st===0){o.p.y-=o.v*dt;o.p.x+=dt*.25;if(o.p.y<top+.1){const pr=lact?(sick?0:2.2):(.4+2.6*S.h);if(Math.random()<dt*pr*3){o.st=1;o.t=0;S.abs++;S.tot++}else if(o.p.y<.12){o.st=2;S.tot++}}}
+else if(o.st===1){o.p.y-=dt*.6;if(o.t>.8)return false}else{o.p.y=.12;o.p.x+=dt*1.6;if(o.p.x>4.6){if(lact&&sick)for(let k=0;k<2;k++)S.gas.push({p:new THREE.Vector3(4.6,.3,o.p.z+rnd(-.3,.3)),t:0});return false}}
+if(lact){if(o.st===1){const d=Math.min(.18,o.t*.4);p.copy(o.p);p.x-=d;put(p,Y,1);p.copy(o.p);p.x+=d;put(p,O,1)}else{p.copy(o.p);p.x-=.07;put(p,Y,1);p.copy(o.p);p.x+=.07;put(p,P,1)}}else put(o.p,Y,o.st===1?Math.max(0,1-o.t*1.2):1.2);return true});
+S.gas=S.gas.filter(o=>{o.t+=dt;o.p.y+=dt*.8;o.p.x+=Math.sin(o.t*5)*dt*.2;put(o.p,GA,1.4+o.t*.6);return o.t<3});
+S.pm.count=n;S.pm.instanceMatrix.needsUpdate=true;if(S.pm.instanceColor)S.pm.instanceColor.needsUpdate=true;S.abs*=Math.pow(.9,dt);S.tot*=Math.pow(.9,dt);
+setBar('dzb0',lact?(sick?0:1):S.h,'#ffb347');setBar('dzb1',S.tot>.5?S.abs/S.tot:0,'#ffe066')};
+S.bars=lact?[['dzb0','Lactase enzyme'],['dzb1','Lactose split and absorbed']]:[['dzb0','Villi height'],['dzb1','Food molecules absorbed']];
+S.labels=lact?[['Villi',[-3.9,1.7,0]],['Lactase enzymes (green)',[-.6,1.75,.6]],['On to the large intestine',[4.3,.9,0]]]:[['Villi',[-3.9,1.7,0]],['Food molecules (yellow)',[-1.5,3.0,0]]];
+S.cam=[2.6,4.6,10.2];S.t=[-1.9,.2,0];return S};
+
+DZCI.colon=C=>{const g=new THREE.Group();g.position.copy(C);const S={g,grow:0,shed:[]};
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(9,5.6,30,20),new THREE.MeshStandardMaterial({color:LC('#c96a6e'),roughness:.6,side:THREE.DoubleSide}));wall.rotation.x=-Math.PI/2;g.add(wall);
+const vs=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-4.5,-.05,-2.4),new THREE.Vector3(0,-.05,-2.6),new THREE.Vector3(4.5,-.05,-2.3)]),30,.2,10),new THREE.MeshStandardMaterial({color:LC('#c8202e'),roughness:.4}));g.add(vs);
+const cells=[];for(let i=0;i<30;i++)for(let j=0;j<18;j++)cells.push({x:-4.35+i*.3+(j%2)*.15,z:-2.55+j*.3,s:1});S.cells=cells;
+S.cm=new THREE.InstancedMesh(new THREE.SphereGeometry(.16,10,8),new THREE.MeshStandardMaterial({color:LC('#f0a5a5'),roughness:.5}),cells.length);g.add(S.cm);
+const TN=520,tc=[];for(let i=0;i<TN;i++){const a=rnd(0,6.28),r=Math.pow(Math.random(),.6),hh=Math.sqrt(Math.max(0,1-r*r));tc.push({a,r,hh:hh*rnd(.7,1.15),k:i/TN,s:rnd(.7,1.5),c:new THREE.Color().setHSL(rnd(.88,.98),.55,rnd(.32,.5))})}tc.sort((a,b)=>a.r-b.r);tc.forEach((c,i)=>c.k=i/TN);
+S.tm=new THREE.InstancedMesh(lumpyGeo(.15,1,.2,2),new THREE.MeshStandardMaterial({roughness:.6}),TN);tc.forEach((c,i)=>S.tm.setColorAt(i,LC('#'+c.c.getHexString())));g.add(S.tm);
+S.br=new THREE.InstancedMesh(lumpyGeo(.15,1,.2,5),new THREE.MeshStandardMaterial({color:LC('#a03070')}),12);S.br.count=0;g.add(S.br);S.bl=[];
+S.update=(dt,t,sick)=>{S.grow=sick?Math.min(1,S.grow+dt/14):Math.max(0,S.grow-dt*.5);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+if(!sick&&Math.random()<dt*4){const c=cells[Math.floor(Math.random()*cells.length)];if(c.s>=1)c.s=-.01}
+cells.forEach((c,i)=>{if(c.s<0){c.s-=dt*.8;if(c.s<-1)c.s=0}else if(c.s<1)c.s=Math.min(1,c.s+dt*.7);const sh=c.s<0;p.set(c.x,.08+(sh?-c.s*.8:0),c.z);sc.setScalar(sh?1+c.s:Math.max(.01,c.s));m.compose(p,q,sc);S.cm.setMatrixAt(i,m)});S.cm.instanceMatrix.needsUpdate=true;
+const R=.3+1.5*S.grow,H=.25+1.3*S.grow;tc.forEach((c,i)=>{const on=c.k<S.grow;p.set(Math.cos(c.a)*c.r*R,.1+c.hh*H*(on?1:0),Math.sin(c.a)*c.r*R*.8);sc.setScalar(on?c.s*(1+.05*Math.sin(t*3+i)):0);m.compose(p,q,sc);S.tm.setMatrixAt(i,m)});S.tm.instanceMatrix.needsUpdate=true;
+if(sick&&S.grow>.75&&Math.random()<dt*.8&&S.bl.length<12)S.bl.push({p:new THREE.Vector3(rnd(-.8,.8),.6,rnd(-.4,0)),t:0});S.bl=S.bl.filter(o=>{o.t+=dt;if(o.t<1.6)o.p.lerp(new THREE.Vector3(o.p.x,-.05,-2.5),dt*1.3);else o.p.x+=dt*1.5;return o.p.x<4.5&&sick});
+S.bl.forEach((o,i)=>{sc.setScalar(1);m.compose(o.p,q,sc);S.br.setMatrixAt(i,m)});S.br.count=S.bl.length;S.br.instanceMatrix.needsUpdate=true;
+setTxt('dzT',sick?(S.grow<.25?'Year 1: a small polyp':S.grow<.6?'Year 4: the polyp keeps growing':S.grow<.85?'Year 7: it has become a tumor':'Year 10: cells break off into the blood'):'Healthy: old cells drop off and new ones replace them');setBar('dzb0',S.grow,'#ff6f61')};
+S.bars=[['dzb0','Tumor size']];S.extra=`<div class="small" id="dzT" style="margin-bottom:8px"></div>`;S.labels=[['Colon lining cells',[-3.6,.7,1.6]],['Blood vessel',[3.2,.5,-2.4]],['Tumor',[0,2.3,0],1]];S.cam=[2.4,4.6,7.6];S.t=[-1.4,.2,0];return S};
+
+DZCI.airtree=C=>{const g=new THREE.Group();g.position.copy(C);const S={g,grow:0,air:[]};const pink=new THREE.MeshStandardMaterial({color:LC('#e8a0a4'),roughness:.5});
+const trunk=[[0,3,0],[0,1.9,0],[0,1.1,0]].map(v3);const ends=[[-2.4,-1.3,0],[0,-1.7,.3],[2.4,-1.3,0]].map(v3);
+S.br=ends.map(e=>new THREE.CatmullRomCurve3([trunk[2].clone(),trunk[2].clone().lerp(e,.45).add(new THREE.Vector3(0,.15,0)),e]));S.tr=new THREE.CatmullRomCurve3(trunk);
+g.add(new THREE.Mesh(new THREE.TubeGeometry(S.tr,10,.26,14),pink));S.br.forEach(c=>g.add(new THREE.Mesh(new THREE.TubeGeometry(c,20,.19,12),pink)));
+const AL=[];ends.forEach((e,b)=>{for(let i=0;i<18;i++){const d=new THREE.Vector3(rnd(-1,1),rnd(-1,.4),rnd(-1,1)).normalize().multiplyScalar(rnd(.25,.75));AL.push({p:e.clone().add(d),b,s:rnd(.2,.3)})}});S.AL=AL;
+S.am=new THREE.InstancedMesh(new THREE.SphereGeometry(1,14,10),new THREE.MeshStandardMaterial({roughness:.4,transparent:true,opacity:.92}),AL.length);const m=new THREE.Matrix4(),q=new THREE.Quaternion();AL.forEach((a,i)=>{m.compose(a.p,q,new THREE.Vector3(a.s,a.s,a.s));S.am.setMatrixAt(i,m);S.am.setColorAt(i,LC('#ff8a8a'))});g.add(S.am);
+S.tum=new THREE.Mesh(lumpyGeo(.5,3,.2,9),new THREE.MeshStandardMaterial({color:LC('#5a3346'),roughness:.8}));S.tum.position.copy(S.br[2].getPoint(.3));g.add(S.tum);
+const tar=[];for(let i=0;i<70;i++){const c=Math.random()<.3?S.tr:S.br[Math.floor(Math.random()*3)];const pp=c.getPoint(Math.random());tar.push(pp.add(new THREE.Vector3(rnd(-.2,.2),rnd(-.2,.2),rnd(-.2,.2))))}S.tar=new THREE.InstancedMesh(new THREE.SphereGeometry(.05,6,5),new THREE.MeshStandardMaterial({color:LC('#2a2420')}),tar.length);tar.forEach((pp,i)=>{m.compose(pp,q,new THREE.Vector3(1,1,1));S.tar.setMatrixAt(i,m)});g.add(S.tar);
+S.pm=new THREE.InstancedMesh(new THREE.SphereGeometry(.06,8,6),new THREE.MeshBasicMaterial({color:0xbfe8ff}),200);S.pm.count=0;S.pm.frustumCulled=false;g.add(S.pm);
+const healthyC=LC('#ff8a8a'),grayC=LC('#7a6a70'),tmpC=new THREE.Color();
+S.update=(dt,t,sick)=>{S.grow=sick?Math.min(1,S.grow+dt/8):Math.max(0,S.grow-dt*.6);S.tum.scale.setScalar(.05+S.grow);S.tum.visible=S.grow>.02;S.tar.visible=sick;const blocked=S.grow>.65;
+AL.forEach((a,i)=>{tmpC.copy(healthyC);if(a.b===2)tmpC.lerp(grayC,sstep(.5,1,S.grow));S.am.setColorAt(i,tmpC)});S.am.instanceColor.needsUpdate=true;
+if(Math.random()<dt*14)S.air.push({u:0,b:Math.floor(Math.random()*3),seg:0,a:Math.floor(Math.random()*18)});const mm=new THREE.Matrix4(),p=new THREE.Vector3(),sc=new THREE.Vector3(1,1,1);let n=0;let got=0,tot=0;
+S.air=S.air.filter(o=>{o.u+=dt*.7;if(o.seg===0){S.tr.getPoint(Math.min(1,o.u),p);if(o.u>=1){o.seg=1;o.u=0}}else if(o.seg===1){const lim=o.b===2&&blocked?.24:1;S.br[o.b].getPoint(Math.min(lim,o.u),p);if(o.u>=lim){if(lim<1){o.seg=3;o.t=0}else{o.seg=2;o.u=0}}}else if(o.seg===2){const a=AL[o.b*18+o.a];p.copy(S.br[o.b].getPoint(1)).lerp(a.p,Math.min(1,o.u*2));if(o.u>.6)return false}else{o.t+=dt;p.copy(S.br[o.b].getPoint(.24));if(o.t>.6)return false}
+if(n<200){mm.compose(p,q,sc);S.pm.setMatrixAt(n++,mm)}return true});S.pm.count=n;S.pm.instanceMatrix.needsUpdate=true;
+setBar('dzb0',blocked?2/3:1,'#7fd3ff')};
+S.bars=[['dzb0','Air sacs getting air']];S.labels=[['Airway (bronchus)',[.6,2.6,0]],['Air sacs (alveoli)',[-2.4,-2.4,0]],['Tumor',[2.0,.75,0],1],['Tar from smoke',[-.9,1.8,0],1]];S.cam=[2.6,1.4,9.6];S.t=[-1.6,-.2,0];return S};
+
+DZCI.airway=C=>{const g=new THREE.Group();g.position.copy(C);const S={g,k:0,air:[]};const L=7;
+const half=(r,mat)=>{const geo=new THREE.CylinderGeometry(r,r,L,40,1,true,Math.PI/2,Math.PI);geo.rotateZ(-Math.PI/2);const me=new THREE.Mesh(geo,mat);g.add(me);return me};
+S.outer=half(1.3,new THREE.MeshStandardMaterial({color:LC('#d9787c'),roughness:.6,side:THREE.DoubleSide}));
+S.inner=half(1,new THREE.MeshStandardMaterial({color:LC('#f2b8a8'),roughness:.35,side:THREE.DoubleSide,emissive:LC('#000000')}));
+S.caps=[-1,1].map(sg=>{const rg=new THREE.RingGeometry(1,1.3,40,1,-Math.PI/2,Math.PI);rg.rotateY(Math.PI/2);const me=new THREE.Mesh(rg,new THREE.MeshStandardMaterial({color:LC('#c0606a'),side:THREE.DoubleSide}));me.position.x=sg*L/2;g.add(me);return me});
+S.rings=[];for(let i=0;i<8;i++){const tg=new THREE.TorusGeometry(1.36,.08,8,40,Math.PI);tg.rotateZ(-Math.PI/2);tg.rotateY(Math.PI/2);const me=new THREE.Mesh(tg,new THREE.MeshStandardMaterial({color:LC('#b52a35'),roughness:.5}));me.position.x=-3.1+i*.885;g.add(me);S.rings.push(me)}
+S.muc=[];for(let i=0;i<22;i++){const me=new THREE.Mesh(new THREE.SphereGeometry(rnd(.12,.25),10,8),new THREE.MeshStandardMaterial({color:LC('#e8e0a0'),roughness:.3,transparent:true,opacity:.9}));const a=rnd(Math.PI*1.05,Math.PI*1.95);me.userData={x:rnd(-3.2,3.2),a};g.add(me);S.muc.push(me)}
+S.pm=new THREE.InstancedMesh(new THREE.SphereGeometry(.07,8,6),new THREE.MeshBasicMaterial({color:0xbfe8ff}),160);S.pm.count=0;S.pm.frustumCulled=false;g.add(S.pm);
+S.update=(dt,t,sick)=>{S.k+=((sick?1:0)-S.k)*Math.min(1,dt*1.5);const ri=1-.55*S.k;S.inner.scale.set(1,ri,ri);if(Math.abs(S.k-(S.lk===undefined?-1:S.lk))>.003){S.lk=S.k;S.caps.forEach(c=>{c.geometry.dispose();const rg=new THREE.RingGeometry(ri,1.3,40,1,-Math.PI/2,Math.PI);rg.rotateY(Math.PI/2);c.geometry=rg})}
+S.rings.forEach(r=>r.scale.set(1,1-.12*S.k,1-.12*S.k));S.inner.material.emissive.setRGB(.25*S.k,.02*S.k,0);S.muc.forEach(me=>{const u=me.userData;const rr=ri-.05;me.position.set(u.x,Math.cos(u.a)*rr,Math.sin(u.a)*rr);me.scale.setScalar(S.k)});
+const rate=sick?6:22;if(Math.random()<dt*rate)S.air.push({x:-L/2,y:rnd(-.7,.7),z:rnd(-.7,0),dir:Math.random()<.5?1:-1});const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();let n=0;
+S.air=S.air.filter(o=>{o.x+=dt*(sick?.9:2.4);p.set(o.x,o.y*ri,o.z*ri+(sick?Math.sin(t*20+o.y*9)*.03:0));if(n<160){m.compose(p,q,sc);S.pm.setMatrixAt(n++,m)}return o.x<L/2});S.pm.count=n;S.pm.instanceMatrix.needsUpdate=true;
+setBar('dzb0',ri,'#7fd3ff');setBar('dzb1',sick?.27:1,'#c9f2ff')};
+S.bars=[['dzb0','Airway opening'],['dzb1','Air flow']];S.labels=[['Airway lining and mucus',[-1.2,-1.1,-.2]],['Muscle rings',[2.6,1.55,0]],['Swollen wall',[3.6,-.8,0],1],['Extra mucus',[-.4,.75,-.3],1]];S.cam=[1.2,1.1,8.6];S.t=[-1.6,-.5,-.6];return S};
+
+DZCI.blood=C=>{const g=new THREE.Group();g.position.copy(C);const S={g,mix:0};
+const vs=new THREE.Mesh(new THREE.CylinderGeometry(2,2,12,40,1,true),new THREE.MeshPhysicalMaterial({color:LC('#c03040'),transparent:true,opacity:.18,roughness:.2,clearcoat:.8,side:THREE.DoubleSide,depthWrite:false}));vs.rotation.z=Math.PI/2;vs.renderOrder=3;g.add(vs);
+const kinds={rbc:{n:110,geo:rbcGeo(.3),mat:new THREE.MeshStandardMaterial({color:LC('#c0101c'),roughness:.5})},wbc:{n:8,geo:lumpyGeo(.42,3,.1,2),mat:new THREE.MeshPhysicalMaterial({color:LC('#f2f0ff'),roughness:.35,clearcoat:.5})},plt:{n:45,geo:new THREE.OctahedronGeometry(.09,0),mat:new THREE.MeshStandardMaterial({color:LC('#ffd27a'),emissive:LC('#302000')})},blast:{n:70,geo:lumpyGeo(.4,3,.14,6),mat:new THREE.MeshPhysicalMaterial({color:LC('#8a5ad0'),roughness:.5,clearcoat:.3})}};
+S.K={};Object.keys(kinds).forEach(k=>{const d=kinds[k];const im=new THREE.InstancedMesh(d.geo,d.mat,d.n);g.add(im);const L=[];for(let i=0;i<d.n;i++)L.push({x:rnd(-6,6),y:rnd(-1.6,1.6),z:rnd(-1.6,1.6),r:rnd(0,6),sp:rnd(.8,1.2),th:Math.random()});S.K[k]={im,L}});
+const want={rbc:[1,.45],wbc:[1,.4],plt:[1,.3],blast:[0,1]};
+S.update=(dt,t,sick)=>{S.mix+=((sick?1:0)-S.mix)*Math.min(1,dt*.8);const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+Object.keys(S.K).forEach(k=>{const w=want[k][0]+(want[k][1]-want[k][0])*S.mix;const {im,L}=S.K[k];L.forEach((o,i)=>{o.x+=dt*1.6*o.sp;if(o.x>6)o.x=-6;o.r+=dt;const vis=o.th<w;const yy=o.y,zz=o.z,rr=Math.hypot(yy,zz);const f=rr>1.6?1.6/rr:1;p.set(o.x,yy*f,zz*f);q.setFromEuler(new THREE.Euler(o.r,o.r*.7,0));sc.setScalar(vis?1:0);m.compose(p,q,sc);im.setMatrixAt(i,m)});im.instanceMatrix.needsUpdate=true});
+setBar('dzb0',1-.55*S.mix,'#ff4d5e');setBar('dzb1',1-.6*S.mix,'#f4f2ff');setBar('dzb2',1-.7*S.mix,'#ffd27a');setBar('dzb3',S.mix,'#a77bff')};
+S.bars=[['dzb0','Red blood cells'],['dzb1','Working white blood cells'],['dzb2','Platelets'],['dzb3','Abnormal white blood cells']];S.labels=[['Red blood cell',[-3.5,2.4,0]],['Abnormal white blood cells (purple)',[1.5,2.4,0],1]];S.cam=[2,2.6,11.5];S.t=[-2.6,-.6,0];return S};
+
+DZCI.insulin=C=>{const g=new THREE.Group();g.position.copy(C);const S={g,bs:.35,en:.8,gl:[],ins:[],doors:[]};
+const cap=new THREE.Mesh(new THREE.CylinderGeometry(.9,.9,11,32,1,true),new THREE.MeshPhysicalMaterial({color:LC('#c03040'),transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));cap.rotation.z=Math.PI/2;cap.position.y=1.7;cap.renderOrder=3;g.add(cap);
+S.cell=new THREE.Mesh(new THREE.SphereGeometry(6,64,32,0,Math.PI*2,0,.62),new THREE.MeshPhysicalMaterial({color:LC('#c78ac8'),roughness:.5,clearcoat:.3,emissive:LC('#000000'),side:THREE.DoubleSide}));S.cell.position.y=-5.85;g.add(S.cell);
+for(let i=0;i<6;i++){const x=-3.2+i*1.3;const y=Math.sqrt(36-x*x)-5.85;const dg=new THREE.Group();dg.position.set(x,y,0);dg.rotation.z=-Math.asin(x/6);const ch=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.42,12,1,true),new THREE.MeshStandardMaterial({color:LC('#ff5a5a'),emissive:LC('#400000'),side:THREE.DoubleSide}));dg.add(ch);const rc=new THREE.Mesh(new THREE.ConeGeometry(.1,.3,8),new THREE.MeshStandardMaterial({color:LC('#9ad0ff'),emissive:LC('#000000')}));rc.position.set(.38,.12,0);dg.add(rc);g.add(dg);S.doors.push({g:dg,ch,rc,open:0,x,y})}
+S.gm=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.09,0),new THREE.MeshBasicMaterial({color:0xffe066}),400);S.gm.count=0;S.gm.frustumCulled=false;g.add(S.gm);S.im=new THREE.InstancedMesh(new THREE.TetrahedronGeometry(.12),new THREE.MeshBasicMaterial({color:0x5fa8ff}),60);S.im.count=0;S.im.frustumCulled=false;g.add(S.im);
+S.update=(dt,t,sick)=>{const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();
+if(Math.random()<dt*9)S.gl.push({p:new THREE.Vector3(-5.5,1.7+rnd(-.6,.6),rnd(-.6,.6)),st:0});if(!sick&&Math.random()<dt*2.2)S.ins.push({p:new THREE.Vector3(-5.5,1.7+rnd(-.5,.5),rnd(-.5,.5)),st:0});
+S.ins=S.ins.filter(o=>{if(o.st===0){o.p.x+=dt*1.6;const d=S.doors.find(d=>Math.abs(d.x+.38-o.p.x)<.15&&d.open<.2);if(d&&Math.random()<.5){o.st=1;o.d=d;o.t=0}if(o.p.x>5.5)return false}else{o.t+=dt;o.p.lerp(new THREE.Vector3(o.d.x+.38,o.d.y+.3,0),dt*4);if(o.t>.5)o.d.open=1;if(o.t>2.5)return false}return true});
+S.doors.forEach(d=>{d.open=Math.max(0,d.open-dt*.35);d.ch.material.color.copy(LC(d.open>.2?'#5fe08a':'#ff5a5a'));d.ch.material.emissive.copy(LC(d.open>.2?'#0a4020':'#400000'));d.rc.material.emissive.setRGB(0,.2*d.open,.5*d.open)});
+let n=0;S.gl=S.gl.filter(o=>{if(o.st===0){o.p.x+=dt*(1+.3*Math.sin(o.p.y*7));const d=S.doors.find(d=>d.open>.2&&Math.abs(d.x-o.p.x)<.3);if(d&&Math.random()<dt*6){o.st=1;o.d=d;o.t=0}if(o.p.x>5.5){o.p.x=-5.5}}else{o.t+=dt;const tg=new THREE.Vector3(o.d.x,o.d.y-.6,0);o.p.lerp(o.t<.6?new THREE.Vector3(o.d.x,o.d.y+.1,0):tg,dt*4);if(o.t>1.1){S.en=Math.min(1,S.en+.03);return false}}if(n<400){m.compose(o.p,q,sc);S.gm.setMatrixAt(n++,m)}return true});
+if(S.gl.length>380)S.gl.splice(0,S.gl.length-380);S.gm.count=n;S.gm.instanceMatrix.needsUpdate=true;let k=0;S.ins.forEach(o=>{if(k<60){m.compose(o.p,q,sc);S.im.setMatrixAt(k++,m)}});S.im.count=k;S.im.instanceMatrix.needsUpdate=true;
+S.en=Math.max(0,S.en-dt*.06);S.bs=Math.min(1,S.gl.length/300);S.cell.material.emissive.setRGB(.35*S.en,.15*S.en,.05*S.en);setBar('dzb0',S.bs,S.bs>.6?'#ff6f61':'#ffe066');setBar('dzb1',S.en,'#ffb347')};
+S.bars=[['dzb0','Sugar in the blood'],['dzb1','Fuel inside the cell']];S.labels=[['Capillary (blood)',[-4.2,2.9,0]],['Body cell',[-3.6,-.9,1.5]],['Glucose door',[1.4,1.0,0]],['Insulin (blue)',[-2.2,2.9,0],0]];S.cam=[1.6,3.4,10.5];S.t=[-2.4,.3,0];return S};
+
+DZCI.artery=C=>{const g=new THREE.Group();g.position.copy(C);const S={g,pl:0,clot:0,ox:1,rb:[],t0:0};
+const tube=new THREE.Mesh(new THREE.CylinderGeometry(1,1,9,40,1,true),new THREE.MeshPhysicalMaterial({color:LC('#c04050'),transparent:true,opacity:.22,roughness:.3,side:THREE.DoubleSide,depthWrite:false}));tube.rotation.z=Math.PI/2;tube.position.x=-1;tube.renderOrder=3;g.add(tube);
+S.pls=[];for(let i=0;i<14;i++){const me=new THREE.Mesh(lumpyGeo(rnd(.22,.34),2,.2,i),new THREE.MeshStandardMaterial({color:LC('#f2d36a'),roughness:.8}));const a=rnd(0,6.28);me.userData={x:rnd(-1.6,.4),a};g.add(me);S.pls.push(me)}
+S.cl=new THREE.Mesh(lumpyGeo(.5,3,.25,4),new THREE.MeshStandardMaterial({color:LC('#5a0a10'),roughness:.9}));S.cl.position.set(-.6,0,0);g.add(S.cl);
+S.mus=new THREE.Mesh(new THREE.BoxGeometry(2.6,3.4,2.6,6,8,6),new THREE.MeshStandardMaterial({color:LC('#b8323c'),roughness:.6,emissive:LC('#000000')}));S.mus.position.set(4.9,0,0);g.add(S.mus);
+S.rm=new THREE.InstancedMesh(rbcGeo(.22),new THREE.MeshStandardMaterial({color:LC('#c0101c'),roughness:.5}),90);S.rm.frustumCulled=false;g.add(S.rm);for(let i=0;i<90;i++)S.rb.push({x:rnd(-5.5,3.5),y:rnd(-.7,.7),z:rnd(-.7,.7),r:rnd(0,6)});
+const mc=LC('#b8323c'),dc=LC('#4a3a40');
+S.update=(dt,t,sick)=>{if(sick){S.t0+=dt;S.pl=Math.min(1,S.t0/7);S.clot=sstep(8,10,S.t0)}else{S.t0=0;S.pl=Math.max(0,S.pl-dt*.5);S.clot=Math.max(0,S.clot-dt)}
+const open=Math.max(0,1-.55*S.pl-.45*S.clot);S.pls.forEach(me=>{const u=me.userData,r=.98-.2*S.pl;me.position.set(u.x,Math.cos(u.a)*r,Math.sin(u.a)*r);me.scale.setScalar(S.pl)});S.cl.scale.setScalar(S.clot*1.15);S.cl.visible=S.clot>.01;
+S.ox+=((open>.05?1:0)-S.ox)*Math.min(1,dt*(open>.05?.8:.25));S.mus.material.color.copy(mc).lerp(dc,1-S.ox);S.mus.material.emissive.setRGB(.2*S.ox*(.6+.4*Math.max(0,Math.sin(t*7))),0,0);
+const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(1,1,1),p=new THREE.Vector3();const sp=1.6*open+.02;
+S.rb.forEach((o,i)=>{const prev=o.x;o.x+=dt*sp*rnd(.8,1.2);if(S.clot>.95&&prev<-1.2&&o.x>=-1.2)o.x=-1.2-rnd(0,.6);if(o.x>3.5)o.x=-5.5;o.r+=dt*sp;const nar=o.x>-2&&o.x<.8?1-.5*S.pl:1;p.set(o.x,o.y*nar,o.z*nar);q.setFromEuler(new THREE.Euler(o.r,0,Math.PI/2));m.compose(p,q,sc);S.rm.setMatrixAt(i,m)});S.rm.instanceMatrix.needsUpdate=true;
+setTxt('dzT',!sick?'Healthy artery: blood flows freely to the heart muscle.':S.clot>.9?'A clot has blocked the artery. The heart muscle past it is starving for oxygen: a heart attack.':S.pl>.6?'Plaque has made the artery narrow. Less blood gets through.':'Plaque is slowly building up inside the artery wall...');setBar('dzb0',open,'#ff6f61');setBar('dzb1',S.ox,'#7fd3ff')};
+S.bars=[['dzb0','Artery opening'],['dzb1','Oxygen reaching the heart muscle']];S.extra=`<div class="small" id="dzT" style="margin-bottom:8px"></div>`;S.labels=[['Coronary artery',[-4.4,1.4,0]],['Heart muscle',[4.9,2.1,0]],['Fatty plaque',[-.8,1.5,0],1],['Blood clot',[-.6,-1.3,.6],1]];S.cam=[1.2,2.4,9.6];S.t=[-1.6,-.4,0];return S};
+
+PROCS.dz={group:30,title:'Other bodies',build(){
+const s=labScene(0x0b1024);const nar=innerWidth/innerHeight<1.1;
+const W={scene:s,keep:true,cam:nar?[0,-.6,25]:[3.2,1.8,15.5],target:nar?[0,-1.4,0]:[-2.9,1.2,0],dz:'celiac',sick:true,inside:false,CI:{}};W.bodyCam=W.cam;W.bodyT=W.target;
+const bodyG=new THREE.Group();s.add(bodyG);W.bodyG=bodyG;W.ghost=procGhost();bodyG.add(bodyPart('body',W.ghost));
+W.org={};['skeleton','vessels','lungs','trachea','heart','liver','stomach','esophagus','smallInt','largeInt','pancreas'].forEach(id=>{if(!BODYG[id])return;const m=bodyPart(id,orgMat({opacity:.16,emissive:new THREE.Color(0,0,0)}));m.material.depthWrite=false;m.renderOrder=1;bodyG.add(m);W.org[id]=m});
+const ctr=id=>{const g=BODYG[id];if(!g.boundingBox)g.computeBoundingBox();return g.boundingBox.getCenter(new THREE.Vector3())};W.ctr=ctr;
+const nearV=(id,t)=>{const a=BODYG[id].attributes.position;let best=null,bd=1e9;const v=new THREE.Vector3();for(let i=0;i<a.count;i+=3){v.fromBufferAttribute(a,i);const d=v.distanceToSquared(t);if(d<bd){bd=d;best=v.clone()}}return best};
+const samp=(id,n)=>{const a=BODYG[id].attributes.position,out=[];for(let i=0;i<n;i++){const k=Math.floor(Math.random()*a.count);out.push(new THREE.Vector3().fromBufferAttribute(a,k))}return out};
+const lc=ctr('largeInt');W.ctum=new THREE.Mesh(lumpyGeo(.2,3,.25,3),new THREE.MeshStandardMaterial({color:LC('#7a2a5a'),roughness:.7,emissive:LC('#200010')}));W.ctum.position.copy(nearV('largeInt',lc.clone().add(new THREE.Vector3(1.4,-.2,.6))));bodyG.add(W.ctum);
+W.ltum=new THREE.Mesh(lumpyGeo(.28,3,.25,7),new THREE.MeshStandardMaterial({color:LC('#4a2a3a'),roughness:.8}));W.ltum.position.copy(nearV('lungs',new THREE.Vector3(-1.0,2.3,.4)));bodyG.add(W.ltum);
+const im=(pts,r,col,op)=>{const me=new THREE.InstancedMesh(new THREE.SphereGeometry(r,8,6),new THREE.MeshStandardMaterial({color:LC(col),transparent:op<1,opacity:op,roughness:.4}),pts.length);const mm=new THREE.Matrix4();pts.forEach((p,i)=>{mm.makeTranslation(p.x,p.y,p.z);me.setMatrixAt(i,mm)});me.renderOrder=5;bodyG.add(me);me.userData.pts=pts;return me};
+W.tar=im(samp('lungs',90),.045,'#2a2420',1);W.gas=im(samp('largeInt',40),.1,'#b8ffcc',.55);W.sug=im(samp('vessels',120),.04,'#ffe066',1);W.blasts=im(samp('vessels',120),.045,'#a77bff',1);
+W.hpatch=glowS(0x302030,.7);W.hpatch.material.blending=THREE.NormalBlending;W.hpatch.position.copy(nearV('heart',ctr('heart').add(new THREE.Vector3(.5,-.4,.6))));bodyG.add(W.hpatch);
+W.ciRoot=new THREE.Group();s.add(W.ciRoot);
+const CIX={villi:400,lactose:440,colon:480,airtree:520,airway:560,blood:600,insulin:640,artery:680};
+W.getCI=k=>{if(!W.CI[k]){const C=new THREE.Vector3(CIX[k],0,0);const S=k==='lactose'?DZCI.villi(C,true):DZCI[k](C);W.ciRoot.add(S.g);S.key=k;S.C=C;W.CI[k]=S}return W.CI[k]};
+W.curCI=()=>{const D=DZ[W.dz];return W.getCI(D.ci==='villi'&&W.dz==='lactose'?'lactose':D.ci)};
+W.onEnter=()=>{W.Lb=labLabel('');W.Lci=[];W.mkCiLabels()};
+W.mkCiLabels=()=>{(W.Lci||[]).forEach(l=>l.el.remove());W.Lci=[];const S=W.curCI();(S.labels||[]).forEach(([t,p,onlySick])=>W.Lci.push({el:labLabel(t),p:S.C.clone().add(v3(p)),os:!!onlySick}))};
+W.go=()=>{if(W.inside){const S=W.curCI();camTo(W,S.C.clone().add(v3(nar?[S.cam[0]*.5,S.cam[1]+1.2,S.cam[2]*2.1]:S.cam)).toArray(),S.C.clone().add(v3(nar?[S.t[0]*.15,S.t[1]-3.4,S.t[2]]:S.t)).toArray())}else camTo(W,W.bodyCam,W.bodyT)};
+W.pick=k=>{W.dz=k;W.mkCiLabels();if(W.inside)W.go();const S=W.curCI();if(S.grow!==undefined)S.grow=0;if(S.t0!==undefined)S.t0=0};
+W.tools=[['hl','💚 Healthy',()=>{W.sick=false}],['sk','🩺 Sick',()=>{W.sick=true}],['in','🔍 Go inside',()=>{W.inside=!W.inside;W.go()}]];
+W.sync=()=>{$('labTabs').querySelectorAll('button').forEach(b=>{const t=b.dataset.t;if(t==='hl')b.classList.toggle('on',!W.sick);if(t==='sk')b.classList.toggle('on',W.sick);if(t==='in'){b.textContent=W.inside?'⬅ Back to the body':'🔍 Go inside';b.classList.toggle('on',W.inside)}})};
+W.card=()=>{const D=DZ[W.dz],S=W.curCI();let h=`<div class="step">Teacher only: other bodies</div><div class="foods">${Object.keys(DZ).map(k=>`<button data-k="${k}" class="${W.dz===k?'on':''}"><span>${DZ[k].e}</span>${DZ[k].name}</button>`).join('')}</div><h3>${W.sick?D.name:'Healthy body'}</h3>${D.sub&&W.sick?`<div class="small" style="margin:-4px 0 8px">${D.sub}</div>`:''}<div class="stage">${W.sick?D.what[1]:D.what[0]}</div>`;
+if(W.sick)h+=`<div class="small" style="font-weight:800;margin-bottom:4px">Symptoms</div><div class="tags">${D.sym.map(x=>`<span>${x}</span>`).join('')}</div>`;
+if(W.inside){h+=(S.extra||'')+`<div class="bars">${S.bars.map(([id,l])=>`<span>${l}</span><div class="bar"><div id="${id}"></div></div>`).join('')}</div>`}else h+=`<p class="small">🔍 Press <b>Go inside</b> to see ${D.inside} up close.</p>`;
+h+=`<p class="small">🔗 <b>Compared with M'Kenna:</b> ${D.cmp}</p>`;return h};
+W.bind=()=>{$('labCard').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{W.pick(b.dataset.k);renderLabCard()})};
+W.update=(dt,time)=>{runTw(W,dt);const D=DZ[W.dz],sick=W.sick;const pulse=.6+.4*Math.sin(time*4);bodyG.visible=!W.inside||!!W.tw;
+Object.keys(W.org).forEach(id=>{const m=W.org[id],hi=D.organs.includes(id);const op=hi?.92:(id==='skeleton'?.22:.14);m.material.opacity+=(op-m.material.opacity)*Math.min(1,dt*4);m.material.depthWrite=hi;if(hi){if(sick)m.material.emissive.setRGB(.45*pulse,.06*pulse,.03*pulse);else m.material.emissive.setRGB(0,.12,.18)}else m.material.emissive.setRGB(0,0,0)});
+if(W.org.vessels)W.org.vessels.material.color.setRGB(1,sick&&W.dz==='leuk'?.85:1,sick&&W.dz==='leuk'?.9:1);
+W.ghost.uniforms.uMk.value+=(((sick&&W.dz==='celiac')?1:0)-W.ghost.uniforms.uMk.value)*Math.min(1,dt*2);
+W.ctum.visible=sick&&W.dz==='colon';W.ltum.visible=sick&&W.dz==='lung';W.tar.visible=sick&&W.dz==='lung';W.gas.visible=sick&&W.dz==='lactose';W.sug.visible=sick&&W.dz==='t1d';W.blasts.visible=sick&&W.dz==='leuk';W.hpatch.visible=sick&&W.dz==='heart';
+if(W.gas.visible){const mm=new THREE.Matrix4();W.gas.userData.pts.forEach((p,i)=>{const s2=.6+.4*Math.sin(time*3+i);mm.makeScale(s2,s2,s2).setPosition(p);W.gas.setMatrixAt(i,mm)});W.gas.instanceMatrix.needsUpdate=true}
+if(W.org.lungs&&W.dz==='asthma'){const br=sick?1+.015*Math.sin(time*9):1+.035*Math.sin(time*2.2);W.org.lungs.scale.set(br,1,br)}else if(W.org.lungs)W.org.lungs.scale.set(1,1,1);
+Object.values(W.CI).forEach(S=>{S.g.visible=W.inside&&S===W.curCI()||(!!W.tw&&S===W.curCI())});if(W.inside||W.tw){const S=W.curCI();S.update(dt,time,sick)}
+const oc=ctr(D.organs[0]);if(W.Lb){W.Lb.textContent=D.lab;labPlace(W.Lb,oc.clone().add(new THREE.Vector3(1.6,.3,.4)),!W.inside&&!W.tw)}if(W.Lci)W.Lci.forEach(l=>labPlace(l.el,l.p,W.inside&&!W.tw&&(!l.os||sick)))};
 return W}};
 
 TRIPS.stomachP=Object.assign({},TRIPS.stomach,{lesson:22,alias:'stomach',back:'proc:digest'});
